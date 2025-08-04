@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "genai-docs"
+version = "0.1.0"
+description = "Generate comprehensive documentation for Python projects using AI"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Ben Weatherall", email = "ben@example.com"}
+]
+keywords = ["documentation", "ai", "python", "code-generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation",
+]
+dependencies = [
+    "google-generativeai>=0.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+genai-docs = "genai_docs.main:main"
+
+[project.urls]
+Homepage = "https://github.com/benweatherall/genai-docs"
+Repository = "https://github.com/benweatherall/genai-docs"
+Issues = "https://github.com/benweatherall/genai-docs/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["genai_docs"]
+
+[tool.ruff]
+# Import settings from ruff.toml
+extend = "ruff.toml"
+
+[tool.ruff.format]
+# Use ruff's built-in formatter instead of black
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
