@@ -1,0 +1,152 @@
+---
+name: Usage Guide
+description: How to use the GenAI tools
+globs:
+alwaysApply: false
+---
+# Usage Guide
+
+This file provides information on how to use GenAI Docs.
+
+## Overview
+
+GenAI Docs is a tool that automatically generates comprehensive documentation for Python projects using Google's Gemini 2.0 Flash AI model. It employs a bottom-up approach to document your codebase hierarchically.
+
+## Installation
+
+```bash
+# Install from PyPI
+pip install genai-docs
+
+# Or install from source
+git clone https://github.com/benweatherall/genai-docs
+cd genai-docs
+pip install -e .
+```
+
+## Prerequisites
+
+You'll need a Google AI API key. Set it as an environment variable:
+
+```bash
+export GOOGLE_API_KEY="your-api-key-here"
+```
+
+## Basic Usage
+
+### Interactive Mode
+
+```bash
+# Run the interactive tool
+genai-docs
+
+# Or run directly with Python
+python -m genai_docs.main
+```
+
+When prompted, enter the absolute path to your Python project. The tool will:
+
+1. Scan your project structure
+2. Build a hierarchical tree of modules and packages
+3. Read project configuration files (pyproject.toml, README.md, etc.)
+4. Generate documentation starting from leaf modules
+5. Work upwards to parent modules using child documentation
+6. Save `DOCUMENTATION.md` files in each module's directory
+7. Display the complete documentation hierarchy
+
+### Example Session
+
+```
+Please enter the absolute path to the Python repository you want to document: /path/to/my-project
+
+Building module tree for repository: /path/to/my-project
+Reading project configuration files...
+Starting documentation process (bottom-up, leaves first)...
+Documenting: utils (Path: /path/to/my-project/utils)
+Documenting: models (Path: /path/to/my-project/models)
+Documenting: my_package (Path: /path/to/my-project/my_package)
+Documenting: my-project (Project Root)
+
+--- Documentation Complete ---
+Generated Documentation Summary:
+- my-project (Project):
+  Purpose: A comprehensive data processing framework...
+  Public Interface: The main entry point is the `process_data()` function...
+  Installation & Usage: pip install my-project...
+```
+
+## Output Structure
+
+The tool creates `DOCUMENTATION.md` files in each module's directory:
+
+```
+my_project/
+├── DOCUMENTATION.md          # Project-level documentation
+├── pyproject.toml
+├── README.md
+├── my_package/
+│   ├── DOCUMENTATION.md      # Package documentation
+│   ├── __init__.py
+│   ├── utils/
+│   │   ├── DOCUMENTATION.md  # Module documentation
+│   │   └── helpers.py
+│   └── models/
+│       ├── DOCUMENTATION.md  # Module documentation
+│       └── data.py
+└── main.py
+```
+
+## Documentation Content
+
+Each `DOCUMENTATION.md` file contains:
+
+- **Purpose**: What the module/package does
+- **Interface**: Public classes, functions, and variables
+- **Usage**: Import and usage examples
+- **Relationships**: How it connects to other modules
+- **Dependencies**: Key requirements and imports
+
+## Development
+
+### Setup
+
+```bash
+# Clone and install in development mode
+git clone https://github.com/benweatherall/genai-docs
+cd genai-docs
+pip install -e ".[dev]"
+```
+
+### Code Quality
+
+```bash
+# Lint and format code
+ruff check genai_docs/
+ruff format genai_docs/
+
+# Type checking
+mypy genai_docs/
+
+# Run tests
+pytest
+```
+
+## Key Features
+
+- **Hierarchical Analysis**: Scans project structure to identify modules and packages
+- **Bottom-Up Processing**: Documents leaf modules first, then uses their documentation to inform parent module documentation
+- **Context Optimization**: Each documentation call uses only relevant information, preventing hallucinations
+- **Comprehensive Coverage**: Generates purpose, interface, usage examples, and relationships between modules
+- **File-Based Output**: Saves documentation as `DOCUMENTATION.md` files in each module's directory
+- **Project-Level Context**: Uses project configuration files (pyproject.toml, README.md, etc.) for root-level documentation
+
+## Context Optimization for AI Agents
+
+This tool is designed to reduce context window usage for AI agents by:
+
+1. **Replacing Code Parsing**: Instead of parsing individual module code, AI agents can reference the generated `DOCUMENTATION.md` files
+2. **Rolling Up Context**: Parent modules include child documentation summaries, reducing the need to examine individual sub-modules
+3. **Project-Level Focus**: Root documentation focuses on public interfaces and user-facing functionality
+4. **File-Based References**: Each module's documentation is self-contained in its directory
+
+This approach allows AI agents to work with smaller, more focused context windows while maintaining comprehensive understanding of the codebase structure and functionality.

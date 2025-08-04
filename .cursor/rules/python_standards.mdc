@@ -1,0 +1,218 @@
+---
+name: Python standards
+description: Best practices and standards to follow when developing python
+globs: *.py
+alwaysApply: true
+---
+# Python Coding Standards and Best Practices
+
+## 1. Code Structure and Organization
+
+### Do:
+- Write modular code with single-responsibility functions
+- Follow the DRY principle (Don't Repeat Yourself)
+- Keep I/O operations at the outermost layer
+- Decouple business logic from I/O operations
+- Use dependency injection for better testability
+- Break down complex functions into smaller, focused ones
+- Use meaningful module and package names
+- Keep Python files small and focused on a single class or functionality
+- Use modules to encapsulate systems for reuse
+- Aim for files under 300 lines when possible
+- Group related functionality into cohesive modules
+- Create clear module boundaries with well-defined interfaces
+
+### Don't:
+- Mix business logic with I/O operations
+- Create functions that do multiple unrelated things
+- Hardcode dependencies in your code
+- Repeat code patterns without abstraction
+- Create circular dependencies between modules
+- Use global variables for state management
+- Write functions that are too long or complex
+- Create monolithic files that handle multiple responsibilities
+- Mix unrelated classes or functions in the same file
+- Exceed 500 lines in a single Python file without strong justification
+
+## 2. Testing and Quality Assurance
+
+### Do:
+- Implement comprehensive unit testing for each component
+- Use mocking for external dependencies (e.g., `unittest.mock`)
+- Write tests before or alongside code (TDD approach)
+- Test edge cases and error conditions
+- Use virtual environments for dependency management
+- Write tests that are independent and isolated
+- Test both success and failure scenarios
+- Save tests like so: `<source_directory>/path/to/file.py` -> `tests/unit/path/to/test_file.py`
+- Save complex test variables as files and load as required: `tests/files/(input | output)/<test_name>_<variable>.json`
+- Ensure assertions provide a descriptive message to help identify errors quickly
+
+for example:
+```
+-    assert result == expected
++    assert result == expected, "Generated report does not match expected output"
+```
+
+### Don't:
+- Skip writing tests for "simple" functions
+- Mock everything without reason
+- Write tests that depend on external services
+- Ignore test coverage metrics
+- Mix test and production code
+- Write tests that depend on each other
+- Assume tests will pass without running them
+
+## 3. Code Quality and Style
+
+### Do:
+- Follow PEP 8 style guidelines
+- Use meaningful and descriptive variable/function names
+- Write clear and concise docstrings
+- Use comments sparingly, focusing on "why" not "what"
+- Leverage built-in functions and standard libraries
+- Use consistent indentation and formatting
+- Follow Python naming conventions
+
+### Don't:
+- Use single-letter variable names (except in loops)
+- Write overly complex one-liners
+- Leave commented-out code in production
+- Use inconsistent naming conventions
+- Ignore linter warnings
+- Mix tabs and spaces
+- Use magic numbers without explanation
+
+## 4. Error Handling and Robustness
+
+### Do:
+- Handle exceptions gracefully
+- Implement proper logging
+- Use appropriate error types
+- Validate inputs and outputs
+- Use context managers for resource management
+- Provide meaningful error messages
+- Clean up resources in finally blocks
+
+### Don't:
+- Use bare except clauses
+- Swallow exceptions silently
+- Log sensitive information
+- Ignore error conditions
+- Use print statements for debugging
+- Leave resources unclosed
+- Raise generic exceptions
+
+## 5. Performance and Efficiency
+
+### Do:
+- Use list comprehensions and generator expressions
+- Optimize data structures and algorithms
+- Profile code to identify bottlenecks
+- Use appropriate data types for the task
+- Implement caching where appropriate
+- Use built-in functions when available
+- Consider memory usage in large applications
+
+### Don't:
+- Prematurely optimize without profiling
+- Use inefficient data structures
+- Ignore memory leaks
+- Write nested loops without necessity
+- Cache everything without strategy
+- Ignore time complexity
+- Reinvent standard library functions
+
+## 6. Documentation and Maintainability
+
+### Do:
+- Write clear API documentation
+- Include usage examples
+- Document design decisions
+- Keep documentation up-to-date
+- Use type hints for better code clarity
+- Document complex algorithms
+- Keep README files current
+
+### Don't:
+- Write documentation that doesn't match the code
+- Use unclear or ambiguous terms
+- Document obvious code
+- Leave TODO comments in production code
+- Ignore documentation updates
+- Use outdated examples
+- Mix documentation styles
+
+## 7. Development Practices
+
+### Do:
+- Use version control (e.g., Git)
+- Implement continuous integration
+- Perform regular code reviews
+- Refactor code regularly
+- Use automated testing tools
+- Write meaningful commit messages
+- Follow branching strategies
+
+### Don't:
+- Commit directly to main/master branch
+- Ignore CI/CD failures
+- Skip code reviews
+- Leave technical debt unaddressed
+- Commit large files to version control
+- Write vague commit messages
+- Mix unrelated changes in one commit
+
+## 8. Security Considerations
+
+### Do:
+- Validate and sanitize inputs
+- Use secure coding practices
+- Handle sensitive data appropriately
+- Keep dependencies updated
+- Follow security best practices
+- Use environment variables for secrets
+- Implement proper authentication
+
+### Don't:
+- Trust user input without validation
+- Store secrets in code
+- Use deprecated libraries
+- Ignore security warnings
+- Hardcode credentials
+- Expose sensitive information in logs
+- Use weak encryption algorithms
+
+## 9. File Organization and Module Design
+
+### Do:
+- Keep Python files focused on a single class or cohesive functionality
+- Use modules to encapsulate related systems for reuse
+- Aim for files under 300 lines when possible
+- Group related functionality into cohesive modules
+- Create clear module boundaries with well-defined interfaces
+- Use `__init__.py` files to define clean module APIs
+- Separate concerns across different modules
+- Create utility modules for shared functionality
+- Use package structure to organize complex systems
+- Document module purpose and responsibilities clearly
+
+### Don't:
+- Create monolithic files that handle multiple responsibilities
+- Mix unrelated classes or functions in the same file
+- Exceed 500 lines in a single Python file without strong justification
+- Create circular dependencies between modules
+- Put everything in a single file for convenience
+- Mix different abstraction levels in the same module
+- Create modules with unclear boundaries or responsibilities
+
+## 10. Team Practices
+
+### Do:
+- Use pathlib.Path when handling paths and file IO
+- Always use helper functions when available
+
+### Don't:
+- Use os.path when handling file IO
+- Pass file paths as strings
+- Introduce a helper function and not use it across the project

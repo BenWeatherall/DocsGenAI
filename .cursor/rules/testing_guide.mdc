@@ -1,0 +1,75 @@
+---
+name: Testing Guide
+description: Python testing best practices guide
+globs:
+alwaysApply: true
+---
+
+# Testing Guide
+
+The project uses pytest for unit testing. Tests are organized to mirror the structure of the source code.
+
+## Test Structure
+
+- Tests are located in the [tests](mdc:tests/) directory
+- Unit tests are in [tests/unit](mdc:tests/unit/)
+- Test fixtures and data files are in [tests/files](mdc:tests/files/)
+
+## Test File Pattern
+
+Source files to test files follow this pattern:
+- `genai_docs/path/to/file.py` → `tests/unit/path/to/test_file.py`
+
+## Key Test Files
+
+- [test_comparison.py](mdc:tests/unit/test_comparison.py) - Tests for schema comparison functionality
+- [conftest.py](mdc:tests/conftest.py) - Common test fixtures and configurations
+
+## Black Box Testing Philosophy
+
+**All tests must be treated as black box tests.** This means:
+
+### Do:
+- Test the public interface and behavior of functions/classes
+- Focus on inputs, outputs, and observable behavior
+- Test the contract that the code promises to fulfill
+- Use real dependencies when possible
+- Test integration between components naturally
+- Verify that the code works as intended from the user's perspective
+
+### Don't:
+- Mock internal implementation details
+- Mock functions or methods unless testing is impossible without it
+- Mock dependencies that can be tested with real objects
+- Mock for convenience or to avoid setting up test data
+- Mock to isolate components that should be tested together
+
+## When Mocking is Acceptable
+
+Mocking should only be used when:
+1. **External APIs**: Testing against real external services is impossible or impractical
+2. **File System Operations**: When real file operations would be destructive or require special permissions
+3. **Network Calls**: When real network calls would be slow, unreliable, or require credentials
+4. **Time-dependent Operations**: When testing time-sensitive functionality
+5. **Hardware Dependencies**: When testing would require specific hardware
+
+## Best Practices
+
+1. Test files should be stored under `tests/unit/` following the same structure as source files
+2. Test input/output data should be stored in `tests/files/(input|output)/`
+3. Use descriptive assertion messages:
+   ```python
+   assert result == expected, "Generated report does not match expected output"
+   ```
+4. Test both success and failure scenarios
+5. Write independent and isolated tests
+6. **Prefer real objects over mocks**
+7. **Test the behavior, not the implementation**
+8. Use test fixtures to set up realistic test data
+9. Test error conditions with real error scenarios
+
+## Test Data Management
+
+- Store complex test variables as files: `tests/files/(input|output)/<test_name>_<variable>.json`
+- Use realistic test data that represents actual usage scenarios
+- Avoid hardcoded test data in test methods when it becomes complex

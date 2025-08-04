@@ -1,10 +1,11 @@
 """
-Main entry point for GenAI Docs.
+Command-line interface for GenAI Docs.
 
-This module orchestrates the documentation generation process,
-bringing together all the components in a clean, modular way.
+This module provides a clean CLI interface for the documentation generator,
+handling command-line arguments and user interaction.
 """
 
+import argparse
 import logging
 import sys
 from pathlib import Path
@@ -16,6 +17,56 @@ from .file_manager import file_manager
 from .tree_builder import tree_builder
 
 logger = logging.getLogger(__name__)
+
+
+def create_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser."""
+    parser = argparse.ArgumentParser(
+        description="Generate comprehensive documentation for Python projects using AI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  genai-docs /path/to/project
+  genai-docs /path/to/project --output /path/to/docs
+  genai-docs /path/to/project --verbose
+  genai-docs /path/to/project --dry-run
+        """
+    )
+
+    parser.add_argument(
+        "project_path",
+        help="Path to the Python project to document"
+    )
+
+    parser.add_argument(
+        "--output", "-o",
+        help="Output directory for documentation (default: same as project)"
+    )
+
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be documented without generating files"
+    )
+
+    parser.add_argument(
+        "--model",
+        help="LLM model to use (default: gemini-2.0-flash)"
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="genai-docs 0.1.0"
+    )
+
+    return parser
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -76,14 +127,20 @@ def build_and_validate_tree(project_path: str) -> ModuleNode:
     return module_tree_root
 
 
-def generate_documentation(module_tree_root: ModuleNode, project_path: str) -> None:
+def generate_documentation(module_tree_root: ModuleNode, project_path: str, dry_run: bool = False) -> None:
     """
     Generate documentation for the entire module tree.
 
     Args:
         module_tree_root: Root node of the module tree
         project_path: Path to the project root
+        dry_run: If True, don't actually generate documentation
     """
+    if dry_run:
+        logger.info("DRY RUN: Would read project configuration files...")
+        logger.info("DRY RUN: Would start documentation generation...")
+        return
+
     logger.info("Reading project configuration files...")
     project_files = file_manager.read_project_files(project_path)
 
@@ -93,25 +150,36 @@ def generate_documentation(module_tree_root: ModuleNode, project_path: str) -> N
     logger.info("Documentation generation completed")
 
 
-def print_summary(module_tree_root: ModuleNode) -> None:
+def print_summary(module_tree_root: ModuleNode, dry_run: bool = False) -> None:
     """
     Print a summary of the generated documentation.
 
     Args:
         module_tree_root: Root node of the module tree
+        dry_run: If True, indicate this is a dry run
     """
-    print("\n--- Documentation Complete ---")
-    print("Generated Documentation Summary:")
+    if dry_run:
+        print("\n--- DRY RUN: Documentation Summary ---")
+        print("The following would be documented:")
+    else:
+        print("\n--- Documentation Complete ---")
+        print("Generated Documentation Summary:")
+
     print(doc_generator.get_documentation_summary(module_tree_root))
 
 
-def validate_results(module_tree_root: ModuleNode) -> None:
+def validate_results(module_tree_root: ModuleNode, dry_run: bool = False) -> None:
     """
     Validate the generated documentation and print results.
 
     Args:
         module_tree_root: Root node of the module tree
+        dry_run: If True, don't validate actual results
     """
+    if dry_run:
+        print("\n--- DRY RUN: Would validate results ---")
+        return
+
     validation = doc_generator.validate_documentation(module_tree_root)
 
     print("\n--- Validation Results ---")
@@ -136,49 +204,61 @@ def validate_results(module_tree_root: ModuleNode) -> None:
         print("\n❌ Documentation generation completed with issues")
 
 
-def main() -> None:
+def main() -> int:
     """
-    Main function to orchestrate the documentation generation process.
+    Main CLI entry point.
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
     """
+    parser = create_parser()
+    args = parser.parse_args()
+
     try:
         # Setup configuration
         config.load_from_environment()
+
+        # Override model if specified
+        if args.model:
+            config.model_name = args.model
+
         config.validate()
 
         # Setup logging
-        setup_logging(verbose=False)
-
-        # Get project path from user input
-        repo_path = input(
-            "Please enter the absolute path to the Python repository you want to document: "
-        )
+        setup_logging(verbose=args.verbose)
 
         # Validate project path
-        if not validate_project_path(repo_path):
-            sys.exit(1)
+        if not validate_project_path(args.project_path):
+            return 1
 
         # Set project configuration
-        config.set_project_root(repo_path)
+        config.set_project_root(args.project_path)
+
+        # Set output directory if specified
+        if args.output:
+            config.set_output_dir(args.output)
 
         # Build and validate module tree
-        module_tree_root = build_and_validate_tree(repo_path)
+        module_tree_root = build_and_validate_tree(args.project_path)
 
         # Generate documentation
-        generate_documentation(module_tree_root, repo_path)
+        generate_documentation(module_tree_root, args.project_path, args.dry_run)
 
         # Print summary
-        print_summary(module_tree_root)
+        print_summary(module_tree_root, args.dry_run)
 
         # Validate results
-        validate_results(module_tree_root)
+        validate_results(module_tree_root, args.dry_run)
+
+        return 0
 
     except KeyboardInterrupt:
         logger.info("Documentation generation interrupted by user")
-        sys.exit(1)
+        return 1
     except Exception as e:
         logger.error(f"Documentation generation failed: {e}")
-        sys.exit(1)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

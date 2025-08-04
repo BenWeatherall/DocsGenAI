@@ -1,0 +1,84 @@
+---
+name: Project Overview
+description: GenAI project overview
+globs:
+alwaysApply: true
+---
+
+# GenAI Docs - Project Overview
+
+This project is a tool for automatically generating comprehensive documentation for Python projects using AI. It employs a hierarchical, bottom-up approach to minimize context window usage while providing complete codebase documentation.
+
+## Core Components
+
+- **Main Application**: [main.py](mdc:genai_docs/main.py) contains the complete application logic including module tree building, documentation generation, and file output
+- **ModuleNode Class**: Represents Python modules/packages in the hierarchical tree structure
+- **Documentation Generation**: Uses Google's Gemini 2.0 Flash model to generate comprehensive documentation
+- **File Management**: Handles reading project files and saving documentation as markdown files
+
+## Key Features
+
+- **Hierarchical Analysis**: Scans project structure to identify modules and packages
+- **Bottom-Up Processing**: Documents leaf modules first, then uses their documentation to inform parent module documentation
+- **Context Optimization**: Each documentation call uses only relevant information, preventing hallucinations
+- **Comprehensive Coverage**: Generates purpose, interface, usage examples, and relationships between modules
+- **File-Based Output**: Saves documentation as `DOCUMENTATION.md` files in each module's directory
+- **Project-Level Context**: Uses project configuration files (pyproject.toml, README.md, etc.) for root-level documentation
+
+## Core Functions
+
+- **build_module_tree()**: Scans directory structure and builds hierarchical tree of modules/packages
+- **document_module_tree_bottom_up()**: Recursively documents from leaves to root using child documentation
+- **document_project_root()**: Generates project-level documentation using configuration files
+- **save_documentation_to_file()**: Saves documentation as markdown files in module directories
+- **get_llm_documentation()**: Interfaces with Gemini 2.0 Flash for documentation generation
+- **read_project_files()**: Reads project configuration files for context
+
+## Project Structure
+
+```
+genai-docs/
+├── genai_docs/
+│   └── main.py          # Main application logic (514 lines)
+├── docs/                # Project documentation and specifications
+│   ├── architecture_diagram.md
+│   ├── ast_analyzer_spec.md
+│   ├── dependency_graph_spec.md
+│   ├── doc_orchestrator_spec.md
+│   ├── master_implementation_plan.md
+│   ├── testing_strategy.md
+│   ├── user_guide.md
+│   └── visualization_spec.md
+├── tests/               # Test suite
+├── pyproject.toml       # Project configuration and dependencies
+├── ruff.toml           # Code formatting and linting configuration
+└── README.md           # Project documentation
+```
+
+## Dependencies
+
+- **google-generativeai**: For AI-powered documentation generation using Gemini 2.0 Flash
+- **Development Tools**: pytest, ruff, mypy for testing and code quality
+
+## Usage
+
+The tool can be run as a command-line application:
+```bash
+genai-docs
+```
+
+Or directly with Python:
+```bash
+python -m genai_docs.main
+```
+
+Requires a Google AI API key set as the `GOOGLE_API_KEY` environment variable.
+
+## Output
+
+Creates `DOCUMENTATION.md` files in each module's directory, providing:
+- Module purpose and functionality
+- Public interface documentation
+- Usage examples
+- Relationships with other modules
+- Installation and setup instructions (for project root)

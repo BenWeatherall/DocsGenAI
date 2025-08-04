@@ -1,0 +1,14 @@
+---
+name: Index
+description: GenAI Docs Index
+globs:
+alwaysApply: true
+---
+
+# GenAI Docs Index
+This project has the following specialized rules available:
+
+- [Project Overview](mdc:.cursor/rules/project_overview.mdc) - Overall structure and components
+- [Testing Guide](mdc:.cursor/rules/testing_guide.mdc) - Testing patterns and best practices
+- [Usage Guide](mdc:.cursor/rules/usage_guide.mdc) - Command-line usage examples
+- [Python Standards](mdc:.cursor/rules/python_standards.mdc) - Python development standards

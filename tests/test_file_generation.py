@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 
-def test_file_generation_logic():
+def test_file_generation_logic() -> None:
     """Test the file generation logic for different scenarios."""
 
     # Create a temporary directory for testing
