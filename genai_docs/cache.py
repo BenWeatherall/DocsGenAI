@@ -9,7 +9,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class DocumentationCache:
     """Manages caching of generated documentation."""
 
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Path | None = None) -> None:
         """
         Initialize the documentation cache.
 
@@ -25,8 +25,8 @@ class DocumentationCache:
             cache_dir: Directory to store cache files (default: .genai-docs in project root)
         """
         self.cache_dir = cache_dir
-        self.cache_file: Optional[Path] = None
-        self.cache_data: dict[str, dict[str, any]] = {}
+        self.cache_file: Path | None = None
+        self.cache_data: dict[str, dict[str, Any]] = {}
 
     def initialize(self, project_root: Path) -> None:
         """
@@ -103,7 +103,7 @@ class DocumentationCache:
         current_hash = self.get_file_hash(file_path)
         return cached_hash == current_hash and cached_hash != ""
 
-    def get_cached_documentation(self, module_path: str) -> Optional[str]:
+    def get_cached_documentation(self, module_path: str) -> str | None:
         """
         Get cached documentation for a module.
 
@@ -150,7 +150,7 @@ class DocumentationCache:
         except OSError as e:
             logger.warning(f"Failed to save cache: {e}")
 
-    def clear_cache(self, module_path: Optional[str] = None) -> None:
+    def clear_cache(self, module_path: str | None = None) -> None:
         """
         Clear cache entries.
 
@@ -173,5 +173,5 @@ class DocumentationCache:
         """
         return {
             "total_entries": len(self.cache_data),
-            "cache_file": str(self.cache_file) if self.cache_file else None,
+            "cache_file": str(self.cache_file) if self.cache_file else None,  # type: ignore[dict-item]
         }

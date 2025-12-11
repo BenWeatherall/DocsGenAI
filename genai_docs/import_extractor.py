@@ -6,7 +6,6 @@ using the Abstract Syntax Tree (AST) parser.
 """
 
 import ast
-from typing import List
 
 from .core_types import ImportStatement
 
@@ -19,9 +18,9 @@ class ImportExtractor(ast.NodeVisitor):
     import and from-import statements, converting them to ImportStatement objects.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the import extractor."""
-        self.imports: List[ImportStatement] = []
+        self.imports: list[ImportStatement] = []
         self.current_line = 0
 
     def visit_Import(self, node: ast.Import) -> None:
@@ -33,7 +32,7 @@ class ImportExtractor(ast.NodeVisitor):
                 from_import=False,
                 line_number=node.lineno,
                 is_relative=False,
-                relative_level=0
+                relative_level=0,
             )
             self.imports.append(import_stmt)
         self.generic_visit(node)
@@ -57,13 +56,13 @@ class ImportExtractor(ast.NodeVisitor):
                 imported_items=[alias.name],
                 line_number=node.lineno,
                 is_relative=is_relative,
-                relative_level=node.level
+                relative_level=node.level,
             )
             self.imports.append(import_stmt)
 
         self.generic_visit(node)
 
-    def extract_imports(self, source_code: str) -> List[ImportStatement]:
+    def extract_imports(self, source_code: str) -> list[ImportStatement]:
         """
         Extract import statements from Python source code.
 

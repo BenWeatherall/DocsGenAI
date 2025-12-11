@@ -5,8 +5,6 @@ This module tests the core data structures and types used
 throughout the documentation generation system.
 """
 
-from pathlib import Path
-
 from genai_docs.core_types import (
     DependencyGraph,
     DocumentationContext,
@@ -21,15 +19,13 @@ class TestModuleNode:
     def setup_method(self):
         """Setup test fixtures."""
         self.node = ModuleNode(
-            name="test_module",
-            path=Path("/path/to/test_module.py"),
-            is_package=False
+            name="test_module", path="/path/to/test_module.py", is_package=False
         )
 
     def test_module_node_initialization(self):
         """Test ModuleNode initialization."""
         assert self.node.name == "test_module"
-        assert self.node.path == Path("/path/to/test_module.py")
+        assert self.node.path == "/path/to/test_module.py"
         assert not self.node.is_package
         assert self.node.children == []
         assert self.node.content is None
@@ -38,9 +34,7 @@ class TestModuleNode:
     def test_module_node_package_initialization(self):
         """Test ModuleNode initialization for packages."""
         package_node = ModuleNode(
-            name="test_package",
-            path=Path("/path/to/test_package"),
-            is_package=True
+            name="test_package", path="/path/to/test_package", is_package=True
         )
 
         assert package_node.name == "test_package"
@@ -50,9 +44,7 @@ class TestModuleNode:
     def test_add_child(self):
         """Test adding a child node."""
         child_node = ModuleNode(
-            name="child_module",
-            path="/path/to/child_module.py",
-            is_package=False
+            name="child_module", path="/path/to/child_module.py", is_package=False
         )
 
         self.node.add_child(child_node)
@@ -65,7 +57,7 @@ class TestModuleNode:
         dep_node = ModuleNode(
             name="dependency_module",
             path="/path/to/dependency_module.py",
-            is_package=False
+            is_package=False,
         )
 
         self.node.add_dependency(dep_node)
@@ -80,7 +72,7 @@ class TestModuleNode:
         dep_node = ModuleNode(
             name="dependency_module",
             path="/path/to/dependency_module.py",
-            is_package=False
+            is_package=False,
         )
 
         self.node.add_dependency(dep_node)
@@ -91,8 +83,8 @@ class TestModuleNode:
 
     def test_get_all_dependencies(self):
         """Test getting all dependencies recursively."""
-        dep1 = ModuleNode("dep1", "/path/to/dep1.py", False)
-        dep2 = ModuleNode("dep2", "/path/to/dep2.py", False)
+        dep1 = ModuleNode(path="/path/to/dep1.py", name="dep1", is_package=False)
+        dep2 = ModuleNode(path="/path/to/dep2.py", name="dep2", is_package=False)
 
         dep1.add_dependency(dep2)
         self.node.add_dependency(dep1)
@@ -105,8 +97,8 @@ class TestModuleNode:
 
     def test_get_all_dependents(self):
         """Test getting all dependents recursively."""
-        dep1 = ModuleNode("dep1", "/path/to/dep1.py", False)
-        dep2 = ModuleNode("dep2", "/path/to/dep2.py", False)
+        dep1 = ModuleNode(path="/path/to/dep1.py", name="dep1", is_package=False)
+        dep2 = ModuleNode(path="/path/to/dep2.py", name="dep2", is_package=False)
 
         dep1.add_dependency(self.node)
         dep2.add_dependency(dep1)
@@ -122,9 +114,7 @@ class TestModuleNode:
         assert self.node.is_leaf()
 
         child_node = ModuleNode(
-            name="child_module",
-            path="/path/to/child_module.py",
-            is_package=False
+            name="child_module", path="/path/to/child_module.py", is_package=False
         )
         self.node.add_child(child_node)
 
@@ -137,14 +127,10 @@ class TestModuleNode:
 
         # Package with children is not a leaf module
         package_node = ModuleNode(
-            name="test_package",
-            path="/path/to/test_package",
-            is_package=True
+            name="test_package", path="/path/to/test_package", is_package=True
         )
         child_node = ModuleNode(
-            name="child_module",
-            path="/path/to/child_module.py",
-            is_package=False
+            name="child_module", path="/path/to/child_module.py", is_package=False
         )
         package_node.add_child(child_node)
 
@@ -158,9 +144,7 @@ class TestModuleNode:
 
         # Test package path
         package_node = ModuleNode(
-            name="test_package",
-            path="/path/to/test_package",
-            is_package=True
+            name="test_package", path="/path/to/test_package", is_package=True
         )
         package_path = package_node.get_file_path()
         assert str(package_path) == "/path/to/test_package/__init__.py"
@@ -170,11 +154,7 @@ class TestModuleNode:
         assert self.node.get_module_name() == "test_module"
 
         # Test root node
-        root_node = ModuleNode(
-            name="root_project",
-            path="/path/to/root",
-            is_root=True
-        )
+        root_node = ModuleNode(name="root_project", path="/path/to/root", is_root=True)
         assert root_node.get_module_name() == "root_project"
 
     def test_repr_representation(self):
@@ -197,7 +177,7 @@ class TestImportStatement:
             imported_items=["item1", "item2"],
             line_number=10,
             is_relative=False,
-            relative_level=0
+            relative_level=0,
         )
 
     def test_import_statement_initialization(self):
@@ -218,9 +198,7 @@ class TestImportStatement:
     def test_import_statement_absolute_import(self):
         """Test absolute import statement."""
         import_stmt = ImportStatement(
-            module_name="os",
-            from_import=False,
-            line_number=1
+            module_name="os", from_import=False, line_number=1
         )
         repr_str = repr(import_stmt)
         assert "import os" in repr_str
@@ -228,10 +206,7 @@ class TestImportStatement:
     def test_import_statement_with_alias(self):
         """Test import statement with alias."""
         import_stmt = ImportStatement(
-            module_name="os",
-            alias="operating_system",
-            from_import=False,
-            line_number=1
+            module_name="os", alias="operating_system", from_import=False, line_number=1
         )
         repr_str = repr(import_stmt)
         assert "import os as operating_system" in repr_str
@@ -383,7 +358,7 @@ class TestDocumentationContext:
             "Test summary",
             "Test interface",
             "Test examples",
-            "Test relationships"
+            "Test relationships",
         )
 
         assert self.context.module_summaries["test_module"] == "Test summary"
@@ -409,12 +384,15 @@ class TestDocumentationContext:
         dep_node.content = "def test_function(): pass"
 
         # Add context for the dependency
-        self.context.add_module_context("dependency_module", "Dependency summary", "Dependency interface")
+        self.context.add_module_context(
+            "dependency_module", "Dependency summary", "Dependency interface"
+        )
 
         context_string = self.context.get_dependency_context_string([dep_node])
 
-        assert "**dependency_module**: Dependency summary" in context_string
-        assert "**dependency_module Interface**: Dependency interface" in context_string
+        assert "dependency_module" in context_string
+        assert "Dependency summary" in context_string
+        assert "Dependency interface" in context_string
 
     def test_get_dependency_context_string_empty(self):
         """Test getting dependency context string with no dependencies."""

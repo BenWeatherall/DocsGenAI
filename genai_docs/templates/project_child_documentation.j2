@@ -1,0 +1,8 @@
+{% if child.documentation %}
+
+### {{ child.name }}
+{{ child.documentation }}
+{% else %}
+
+### {{ child.name }} (No documentation generated)
+{% endif %}

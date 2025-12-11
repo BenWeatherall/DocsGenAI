@@ -7,24 +7,25 @@ model settings, and project configuration.
 
 import os
 from pathlib import Path
-from typing import Optional
+
+from pydantic import BaseModel, Field
 
 from .exceptions import ConfigurationError
 
 
-class Config:
+class Config(BaseModel):
     """Configuration manager for GenAI Docs."""
 
-    def __init__(self):
-        """Initialize configuration with default values."""
-        self.api_key: Optional[str] = None
-        self.model_name: str = "gemini-2.0-flash"
-        self.project_root: Optional[Path] = None
-        self.output_dir: Optional[Path] = None
-        self.use_cache: bool = True
-        self.force_regenerate: bool = False
-        self.use_dependency_graph: bool = True
-        self.verbose: bool = False
+    model_config = {"arbitrary_types_allowed": True}
+
+    api_key: str | None = None
+    model_name: str = Field(default="gemini-2.0-flash")
+    project_root: Path | None = None
+    output_dir: Path | None = None
+    use_cache: bool = Field(default=True)
+    force_regenerate: bool = Field(default=False)
+    use_dependency_graph: bool = Field(default=True)
+    verbose: bool = Field(default=False)
 
     def load_from_environment(self) -> None:
         """Load configuration from environment variables."""
@@ -47,7 +48,7 @@ class Config:
                 f"Project path is not a valid directory: {project_path}"
             )
 
-    def set_output_dir(self, output_path: Optional[str] = None) -> None:
+    def set_output_dir(self, output_path: str | None = None) -> None:
         """Set the output directory for documentation."""
         if output_path:
             self.output_dir = Path(output_path).resolve()

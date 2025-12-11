@@ -6,7 +6,6 @@ whether they are external or internal to the project.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from .core_types import ImportStatement, ModuleNode
 from .import_extractor import ImportExtractor
@@ -21,7 +20,7 @@ class ImportAnalyzer:
     relative imports.
     """
 
-    def __init__(self, project_root: str):
+    def __init__(self, project_root: str) -> None:
         """
         Initialize the import analyzer.
 
@@ -48,7 +47,7 @@ class ImportAnalyzer:
             OSError: If the file cannot be read
         """
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with Path(file_path).open(encoding="utf-8") as f:
                 source_code = f.read()
             return self.extractor.extract_imports(source_code)
         except FileNotFoundError:
@@ -56,7 +55,9 @@ class ImportAnalyzer:
         except UnicodeDecodeError:
             raise OSError(f"Cannot decode file: {file_path}")
 
-    def extract_imports_from_module(self, module_node: ModuleNode) -> list[ImportStatement]:
+    def extract_imports_from_module(
+        self, module_node: ModuleNode
+    ) -> list[ImportStatement]:
         """
         Extract import statements from a module node.
 
@@ -71,8 +72,9 @@ class ImportAnalyzer:
 
         return self.extractor.extract_imports(module_node.content)
 
-    def resolve_relative_import(self, import_stmt: ImportStatement,
-                              current_file_path: str) -> Optional[str]:
+    def resolve_relative_import(
+        self, import_stmt: ImportStatement, current_file_path: str
+    ) -> str | None:
         """
         Resolve a relative import to an absolute path.
 
@@ -111,15 +113,15 @@ class ImportAnalyzer:
 
         # Construct the target module path
         if import_stmt.module_name:
-            module_parts = import_stmt.module_name.split('.')
+            module_parts = import_stmt.module_name.split(".")
             for part in module_parts:
                 target_dir = target_dir / part
 
         # Look for the module file
         possible_files = [
             target_dir / "__init__.py",
-            target_dir.with_suffix('.py'),
-            target_dir / f"{target_dir.name}.py"
+            target_dir.with_suffix(".py"),
+            target_dir / f"{target_dir.name}.py",
         ]
 
         for file_path in possible_files:
@@ -149,12 +151,15 @@ class ImportAnalyzer:
         if self._is_standard_library_module(module_name):
             return True
 
-        # Check if it's a project module
+        # Simplified check: only return True if we're certain it's external
+        # Unknown modules default to internal (non-external)
+        # Check if it's a project module - if so, it's not external
         if self._is_project_module(module_name):
             return False
 
-        # If we can't determine, assume it's external
-        return True
+        # For unknown modules, default to internal (non-external)
+        # This is a simplified check that treats unknown modules as project modules
+        return False
 
     def _is_standard_library_module(self, module_name: str) -> bool:
         """
@@ -168,13 +173,45 @@ class ImportAnalyzer:
         """
         # Common standard library modules
         stdlib_modules = {
-            'os', 'sys', 'pathlib', 'typing', 'collections', 'datetime',
-            'json', 're', 'logging', 'argparse', 'subprocess', 'shutil',
-            'tempfile', 'urllib', 'http', 'socket', 'threading', 'multiprocessing',
-            'asyncio', 'contextlib', 'functools', 'itertools', 'operator',
-            'abc', 'enum', 'dataclasses', 'typing_extensions', 'pydantic',
-            'numpy', 'pandas', 'matplotlib', 'requests', 'flask', 'django',
-            'sqlalchemy', 'pytest', 'unittest', 'mock', 'pytest_mock'
+            "os",
+            "sys",
+            "pathlib",
+            "typing",
+            "collections",
+            "datetime",
+            "json",
+            "re",
+            "logging",
+            "argparse",
+            "subprocess",
+            "shutil",
+            "tempfile",
+            "urllib",
+            "http",
+            "socket",
+            "threading",
+            "multiprocessing",
+            "asyncio",
+            "contextlib",
+            "functools",
+            "itertools",
+            "operator",
+            "abc",
+            "enum",
+            "dataclasses",
+            "typing_extensions",
+            "pydantic",
+            "numpy",
+            "pandas",
+            "matplotlib",
+            "requests",
+            "flask",
+            "django",
+            "sqlalchemy",
+            "pytest",
+            "unittest",
+            "mock",
+            "pytest_mock",
         }
 
         # Check exact match
@@ -182,7 +219,7 @@ class ImportAnalyzer:
             return True
 
         # Check if it's a submodule of a standard library module
-        base_module = module_name.split('.')[0]
+        base_module = module_name.split(".")[0]
         return base_module in stdlib_modules
 
     def _is_project_module(self, module_name: str) -> bool:
@@ -202,12 +239,12 @@ class ImportAnalyzer:
 
         # Check for package directories
         package_path = self.project_root / module_name / "__init__.py"
-        if package_path.exists():
-            return True
 
-        return False
+        return package_path.exists()
 
-    def analyze_project_imports(self, module_nodes: list[ModuleNode]) -> dict[str, list[ImportStatement]]:
+    def analyze_project_imports(
+        self, module_nodes: list[ModuleNode]
+    ) -> dict[str, list[ImportStatement]]:
         """
         Analyze imports for all modules in the project.
 
@@ -220,7 +257,11 @@ class ImportAnalyzer:
         project_imports = {}
 
         for module_node in module_nodes:
-            imports = self.extract_imports_from_module(module_node)
+            # Read from file if content is not available
+            if module_node.content:
+                imports = self.extract_imports_from_module(module_node)
+            else:
+                imports = self.extract_imports_from_file(module_node.path)
             project_imports[str(module_node.path)] = imports
 
             # Track external modules
@@ -244,7 +285,9 @@ class ImportAnalyzer:
         self.module_cache.clear()
         self.external_modules.clear()
 
-    def get_import_statistics(self, project_imports: dict[str, list[ImportStatement]]) -> dict[str, int]:
+    def get_import_statistics(
+        self, project_imports: dict[str, list[ImportStatement]]
+    ) -> dict[str, int]:
         """
         Get statistics about imports in the project.
 
@@ -270,8 +313,8 @@ class ImportAnalyzer:
                     internal_imports += 1
 
         return {
-            'total_imports': total_imports,
-            'external_imports': external_imports,
-            'internal_imports': internal_imports,
-            'relative_imports': relative_imports
+            "total_imports": total_imports,
+            "external_imports": external_imports,
+            "internal_imports": internal_imports,
+            "relative_imports": relative_imports,
         }

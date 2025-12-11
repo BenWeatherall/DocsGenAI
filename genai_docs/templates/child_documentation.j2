@@ -1,0 +1,8 @@
+{% if child.documentation %}
+--- Sub-module/Package: {{ child.name }} Documentation ---
+{{ child.documentation }}
+
+------------------------------------------------
+{% else %}
+--- Sub-module/Package: {{ child.name }} (No documentation generated) ---
+{% endif %}

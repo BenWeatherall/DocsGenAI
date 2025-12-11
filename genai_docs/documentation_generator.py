@@ -7,7 +7,9 @@ orchestrating the documentation of modules, packages, and projects.
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any
+
+from jinja2 import Environment, FileSystemLoader
 
 from .cache import DocumentationCache
 from .core_types import ModuleNode
@@ -15,27 +17,37 @@ from .dependency_analyzer import DependencyAnalyzer
 from .dependency_graph_builder import DependencyGraphBuilder
 from .exceptions import DocumentationError
 from .file_manager import file_manager
-from .llm_client import llm_client
+from .llm_client import LLMClient
 from .progress import ProgressTracker
 
 logger = logging.getLogger(__name__)
+
+# Initialize Jinja2 environment
+_template_dir = Path(__file__).parent / "templates"
+_jinja_env = Environment(loader=FileSystemLoader(_template_dir))
 
 
 class DocumentationGenerator:
     """Handles the documentation generation process."""
 
-    def __init__(self):
-        """Initialize the documentation generator."""
+    def __init__(self, llm_client: LLMClient) -> None:
+        """
+        Initialize the documentation generator.
+
+        Args:
+            llm_client: The LLM client instance to use for documentation generation
+        """
+        self.llm_client: LLMClient = llm_client
         self.use_dependency_graph: bool = True
-        self.cache: Optional[DocumentationCache] = None
+        self.cache: DocumentationCache | None = None
         self.force_regenerate: bool = False
-        self.progress_tracker: Optional[ProgressTracker] = None
+        self.progress_tracker: ProgressTracker | None = None
 
     def document_module_tree_bottom_up(
         self,
         node: ModuleNode,
-        project_files: Optional[dict[str, str]] = None,
-        use_dependency_ordering: Optional[bool] = None,
+        project_files: dict[str, str] | None = None,
+        use_dependency_ordering: bool | None = None,
     ) -> str:
         """
         Recursively documents the module tree from the leaves upwards.
@@ -58,7 +70,7 @@ class DocumentationGenerator:
         return self._document_tree_recursive(node, project_files)
 
     def _document_with_dependency_graph(
-        self, node: ModuleNode, project_files: Optional[dict[str, str]] = None
+        self, node: ModuleNode, project_files: dict[str, str] | None = None
     ) -> str:
         """
         Document modules using dependency-aware ordering.
@@ -252,7 +264,7 @@ class DocumentationGenerator:
         return node.documentation or ""
 
     def _document_tree_recursive(
-        self, node: ModuleNode, project_files: Optional[dict[str, str]] = None
+        self, node: ModuleNode, project_files: dict[str, str] | None = None
     ) -> str:
         """
         Recursively documents the module tree from the leaves upwards (original method).
@@ -287,6 +299,7 @@ class DocumentationGenerator:
             logger.info(f"Successfully documented: {node.name}")
         else:
             logger.error(f"Failed to save documentation for: {node.name}")
+            raise DocumentationError(f"Failed to save documentation for {node.name}")
 
         return node.documentation or ""
 
@@ -306,7 +319,7 @@ class DocumentationGenerator:
         return nodes
 
     def _get_dependency_context(
-        self, node: ModuleNode, exclude_nodes: Optional[set[ModuleNode]] = None
+        self, node: ModuleNode, exclude_nodes: set[ModuleNode] | None = None
     ) -> dict[str, str]:
         """
         Get documentation context from dependencies.
@@ -350,17 +363,15 @@ class DocumentationGenerator:
         """
         logger.info(f"Documenting project root: {node.name}")
 
-        # Collect children documentation
+        # Collect children documentation using Jinja template
+        template = _jinja_env.get_template("project_child_documentation.j2")
         children_docs = []
         for child in node.children:
-            if child.documentation:
-                children_docs.append(f"\n### {child.name}\n{child.documentation}")
-            else:
-                children_docs.append(
-                    f"\n### {child.name} (No documentation generated)\n"
-                )
+            children_docs.append(template.render(child=child))
 
-        return llm_client.generate_project_documentation(project_files, children_docs)
+        return self.llm_client.generate_project_documentation(
+            project_files, children_docs
+        )
 
     def _document_node(self, node: ModuleNode) -> str:
         """
@@ -377,7 +388,7 @@ class DocumentationGenerator:
         return self._document_module(node)
 
     def _document_package(
-        self, node: ModuleNode, dependency_context: Optional[dict[str, str]] = None
+        self, node: ModuleNode, dependency_context: dict[str, str] | None = None
     ) -> str:
         """
         Generate documentation for a Python package.
@@ -389,36 +400,27 @@ class DocumentationGenerator:
         Returns:
             Generated documentation for the package
         """
-        # Collect children documentation
+        # Collect children documentation using Jinja template
+        template = _jinja_env.get_template("child_documentation.j2")
         children_docs = []
         for child in node.children:
-            if child.documentation:
-                children_docs.append(
-                    f"\n--- Sub-module/Package: {child.name} Documentation ---\n"
-                    f"{child.documentation}\n"
-                    f"------------------------------------------------\n"
-                )
-            else:
-                children_docs.append(
-                    f"\n--- Sub-module/Package: {child.name} (No documentation generated) ---\n"
-                )
+            children_docs.append(template.render(child=child))
 
         # Read __init__.py content if it exists
         init_content = file_manager.read_init_file(Path(node.path))
 
-        # Include dependency context if available
+        # Format dependency context using Jinja template
         dep_context_str = ""
         if dependency_context:
-            dep_context_str = "\n\n**Dependencies:**\n"
-            for dep_name, dep_summary in dependency_context.items():
-                dep_context_str += f"- **{dep_name}**: {dep_summary}\n"
+            dep_template = _jinja_env.get_template("dependency_context.j2")
+            dep_context_str = dep_template.render(dependencies=dependency_context)
 
-        return llm_client.generate_package_documentation(
+        return self.llm_client.generate_package_documentation(
             node.name, children_docs, init_content, dependency_context=dep_context_str
         )
 
     def _document_module(
-        self, node: ModuleNode, dependency_context: Optional[dict[str, str]] = None
+        self, node: ModuleNode, dependency_context: dict[str, str] | None = None
     ) -> str:
         """
         Generate documentation for a Python module.
@@ -430,13 +432,13 @@ class DocumentationGenerator:
         Returns:
             Generated documentation for the module
         """
+        # Format dependency context using Jinja template
         dep_context_str = ""
         if dependency_context:
-            dep_context_str = "\n\n**Dependencies:**\n"
-            for dep_name, dep_summary in dependency_context.items():
-                dep_context_str += f"- **{dep_name}**: {dep_summary}\n"
+            dep_template = _jinja_env.get_template("dependency_context.j2")
+            dep_context_str = dep_template.render(dependencies=dependency_context)
 
-        return llm_client.generate_module_documentation(
+        return self.llm_client.generate_module_documentation(
             node.name, node.content, dependency_context=dep_context_str
         )
 
@@ -473,7 +475,7 @@ class DocumentationGenerator:
 
         return summary
 
-    def validate_documentation(self, node: ModuleNode) -> dict[str, any]:
+    def validate_documentation(self, node: ModuleNode) -> dict[str, Any]:
         """
         Validate the generated documentation for completeness and quality.
 
@@ -526,7 +528,3 @@ class DocumentationGenerator:
             "warnings": warnings,
             "stats": stats,
         }
-
-
-# Global documentation generator instance
-doc_generator = DocumentationGenerator()

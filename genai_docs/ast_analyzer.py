@@ -7,7 +7,7 @@ the import extraction and analysis components for convenience.
 
 import ast
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .core_types import ImportStatement, ModuleNode
 from .import_analyzer import ImportAnalyzer
@@ -22,7 +22,7 @@ class ASTAnalyzer:
     class extraction, import analysis, and code complexity metrics.
     """
 
-    def __init__(self, project_root: str):
+    def __init__(self, project_root: str) -> None:
         """
         Initialize the AST analyzer.
 
@@ -33,7 +33,7 @@ class ASTAnalyzer:
         self.import_analyzer = ImportAnalyzer(str(project_root))
         self.extractor = ImportExtractor()
 
-    def parse_python_code(self, code: str) -> Optional[ast.Module]:
+    def parse_python_code(self, code: str) -> ast.Module | None:
         """
         Parse Python code into an AST.
 
@@ -51,7 +51,7 @@ class ASTAnalyzer:
         except (SyntaxError, IndentationError):
             return None
 
-    def extract_functions(self, code: str) -> List[Any]:
+    def extract_functions(self, code: str) -> list[Any]:
         """
         Extract function definitions from Python code.
 
@@ -71,7 +71,14 @@ class ASTAnalyzer:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 # Create a simple object with name attribute for test compatibility
                 class FunctionInfo:
-                    def __init__(self, name, line_number, args, docstring, is_async):
+                    def __init__(
+                        self,
+                        name: str,
+                        line_number: int,
+                        args: list[str],
+                        docstring: str | None,
+                        is_async: bool,
+                    ) -> None:
                         self.name = name
                         self.line_number = line_number
                         self.args = args
@@ -89,7 +96,7 @@ class ASTAnalyzer:
 
         return functions
 
-    def extract_classes(self, code: str) -> List[Any]:
+    def extract_classes(self, code: str) -> list[Any]:
         """
         Extract class definitions from Python code.
 
@@ -108,7 +115,14 @@ class ASTAnalyzer:
             if isinstance(node, ast.ClassDef):
                 # Create a simple object with name attribute for test compatibility
                 class ClassInfo:
-                    def __init__(self, name, line_number, bases, docstring, methods):
+                    def __init__(
+                        self,
+                        name: str,
+                        line_number: int,
+                        bases: list[str],
+                        docstring: str | None,
+                        methods: list[dict[str, Any]],
+                    ) -> None:
                         self.name = name
                         self.line_number = line_number
                         self.bases = bases
@@ -142,7 +156,7 @@ class ASTAnalyzer:
 
         return classes
 
-    def extract_imports(self, code: str) -> List[str]:
+    def extract_imports(self, code: str) -> list[str]:
         """
         Extract import statements from Python code.
 
@@ -155,7 +169,7 @@ class ASTAnalyzer:
         import_statements = self.extractor.extract_imports(code)
         return [str(imp) for imp in import_statements]
 
-    def analyze_module(self, code: str) -> Dict[str, Any]:
+    def analyze_module(self, code: str) -> dict[str, Any]:
         """
         Perform comprehensive analysis of a Python module.
 
@@ -189,7 +203,7 @@ class ASTAnalyzer:
             "complexity": complexity,
         }
 
-    def extract_docstrings(self, code: str) -> List[Dict[str, Any]]:
+    def extract_docstrings(self, code: str) -> list[dict[str, Any]]:
         """
         Extract docstrings from Python code.
 
@@ -219,7 +233,7 @@ class ASTAnalyzer:
 
         return docstrings
 
-    def analyze_complexity(self, code: str) -> Dict[str, Any]:
+    def analyze_complexity(self, code: str) -> dict[str, Any]:
         """
         Analyze code complexity using cyclomatic complexity.
 
@@ -251,7 +265,7 @@ class ASTAnalyzer:
 
         return {"functions": functions}
 
-    def extract_type_hints(self, code: str) -> List[Dict[str, Any]]:
+    def extract_type_hints(self, code: str) -> list[dict[str, Any]]:
         """
         Extract type hints from Python code.
 
@@ -317,7 +331,7 @@ class ASTAnalyzer:
 
         return type_hints
 
-    def analyze_dependencies(self, code: str) -> Dict[str, Any]:
+    def analyze_dependencies(self, code: str) -> dict[str, Any]:
         """
         Analyze dependencies in Python code.
 
@@ -347,7 +361,7 @@ class ASTAnalyzer:
 
         return dependencies
 
-    def is_external_import(self, import_stmt) -> bool:
+    def is_external_import(self, import_stmt: ImportStatement) -> bool:
         """
         Check if an import statement is external to the project.
 
@@ -358,6 +372,22 @@ class ASTAnalyzer:
             True if external, False if internal
         """
         return self.import_analyzer.is_external_import(import_stmt)
+
+    def extract_imports_from_file(self, file_path: str) -> list[ImportStatement]:
+        """
+        Extract import statements from a Python file.
+
+        Args:
+            file_path: Path to the Python file to analyze
+
+        Returns:
+            list of ImportStatement objects found in the file
+
+        Raises:
+            SyntaxError: If the file contains invalid Python syntax
+            OSError: If the file cannot be read
+        """
+        return self.import_analyzer.extract_imports_from_file(file_path)
 
     def analyze_project_imports(
         self, module_nodes: list[ModuleNode]

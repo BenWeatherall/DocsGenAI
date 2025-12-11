@@ -10,14 +10,15 @@ import logging
 import sys
 from pathlib import Path
 
-from . import __version__
 from .cache import DocumentationCache
 from .config import config
 from .core_types import ModuleNode
-from .documentation_generator import doc_generator
+from .documentation_generator import DocumentationGenerator
 from .exceptions import GenAIDocsError
 from .file_manager import file_manager
+from .llm_client import LLMClient
 from .tree_builder import tree_builder
+from .version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +141,10 @@ def build_and_validate_tree(project_path: str) -> ModuleNode:
 
 
 def generate_documentation(
-    module_tree_root: ModuleNode, project_path: str, dry_run: bool = False
+    module_tree_root: ModuleNode,
+    project_path: str,
+    doc_generator: DocumentationGenerator,
+    dry_run: bool = False,
 ) -> None:
     """
     Generate documentation for the entire module tree.
@@ -148,6 +152,7 @@ def generate_documentation(
     Args:
         module_tree_root: Root node of the module tree
         project_path: Path to the project root
+        doc_generator: Documentation generator instance
         dry_run: If True, don't actually generate documentation
     """
     if dry_run:
@@ -164,12 +169,17 @@ def generate_documentation(
     logger.info("Documentation generation completed")
 
 
-def print_summary(module_tree_root: ModuleNode, dry_run: bool = False) -> None:
+def print_summary(
+    module_tree_root: ModuleNode,
+    doc_generator: DocumentationGenerator,
+    dry_run: bool = False,
+) -> None:
     """
     Print a summary of the generated documentation.
 
     Args:
         module_tree_root: Root node of the module tree
+        doc_generator: Documentation generator instance
         dry_run: If True, indicate this is a dry run
     """
     if dry_run:
@@ -182,12 +192,17 @@ def print_summary(module_tree_root: ModuleNode, dry_run: bool = False) -> None:
     print(doc_generator.get_documentation_summary(module_tree_root))
 
 
-def validate_results(module_tree_root: ModuleNode, dry_run: bool = False) -> None:
+def validate_results(
+    module_tree_root: ModuleNode,
+    doc_generator: DocumentationGenerator,
+    dry_run: bool = False,
+) -> None:
     """
     Validate the generated documentation and print results.
 
     Args:
         module_tree_root: Root node of the module tree
+        doc_generator: Documentation generator instance
         dry_run: If True, don't validate actual results
     """
     if dry_run:
@@ -258,6 +273,10 @@ def main() -> int:
         if args.output:
             config.set_output_dir(args.output)
 
+        # Create LLM client and documentation generator
+        llm_client = LLMClient()
+        doc_generator = DocumentationGenerator(llm_client=llm_client)
+
         # Initialize cache if enabled
         if config.use_cache and not args.dry_run:
             cache = DocumentationCache()
@@ -270,13 +289,15 @@ def main() -> int:
         module_tree_root = build_and_validate_tree(args.project_path)
 
         # Generate documentation
-        generate_documentation(module_tree_root, args.project_path, args.dry_run)
+        generate_documentation(
+            module_tree_root, args.project_path, doc_generator, args.dry_run
+        )
 
         # Print summary
-        print_summary(module_tree_root, args.dry_run)
+        print_summary(module_tree_root, doc_generator, args.dry_run)
 
         # Validate results
-        validate_results(module_tree_root, args.dry_run)
+        validate_results(module_tree_root, doc_generator, args.dry_run)
 
         return 0
 

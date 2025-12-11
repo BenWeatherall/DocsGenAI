@@ -21,7 +21,7 @@ pip install genai-docs
 # Or install from source
 git clone https://github.com/benweatherall/genai-docs
 cd genai-docs
-pip install -e .
+./install.sh
 ```
 
 ## Prerequisites

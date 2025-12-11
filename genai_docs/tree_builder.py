@@ -7,7 +7,6 @@ from Python project directories.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 from .core_types import ModuleNode
 from .file_manager import file_manager
@@ -18,10 +17,10 @@ logger = logging.getLogger(__name__)
 class TreeBuilder:
     """Builds hierarchical ModuleNode trees from Python project directories."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the tree builder."""
 
-    def build_module_tree(self, root_dir: str) -> Optional[ModuleNode]:
+    def build_module_tree(self, root_dir: str) -> ModuleNode | None:
         """
         Recursively scans a given root directory to identify Python modules and packages,
         building a hierarchical ModuleNode tree.
@@ -47,7 +46,7 @@ class TreeBuilder:
         # If the root_dir is a package, it's a package node.
         # If it's just a directory containing modules, it's a conceptual root.
         root_node = ModuleNode(
-            str(root_dir), root_name, is_package=is_root_package, is_root=True
+            path=str(root_dir), name=root_name, is_package=is_root_package, is_root=True
         )
 
         # Start the recursive building process from the root directory
@@ -69,14 +68,18 @@ class TreeBuilder:
             item_path = item
 
             # Skip files/directories that should be ignored
-            if not file_manager.is_valid_python_file(item_path) and not self._should_process_directory(item_path):
+            if not file_manager.is_valid_python_file(
+                item_path
+            ) and not self._should_process_directory(item_path):
                 continue
 
             if item_path.is_dir():
                 # Check if it's a Python package (contains __init__.py)
                 if (item_path / "__init__.py").exists():
                     module_name = item_name
-                    node = ModuleNode(str(item_path), module_name, is_package=True)
+                    node = ModuleNode(
+                        path=str(item_path), name=module_name, is_package=True
+                    )
                     parent_node.add_child(node)
                     logger.debug(f"Added package: {module_name}")
                     # Recursively build for the new package
@@ -92,7 +95,9 @@ class TreeBuilder:
                     # We don't create a separate node for __init__.py itself as a module.
                     continue
                 module_name = item_name[:-3]  # Remove .py extension to get module name
-                node = ModuleNode(str(item_path), module_name, is_package=False)
+                node = ModuleNode(
+                    path=str(item_path), name=module_name, is_package=False
+                )
 
                 # Read the module content
                 content = file_manager.read_module_content(item_path)
@@ -131,10 +136,7 @@ class TreeBuilder:
         if dir_path.name in skip_dirs:
             return False
 
-        if dir_path.name.startswith("."):
-            return False
-
-        return True
+        return not dir_path.name.startswith(".")
 
     def get_all_nodes(self, root_node: ModuleNode) -> list[ModuleNode]:
         """
@@ -178,7 +180,9 @@ class TreeBuilder:
             level: Current indentation level
         """
         indent = "  " * level
-        node_type = "Project" if node.is_root else ("Package" if node.is_package else "Module")
+        node_type = (
+            "Project" if node.is_root else ("Package" if node.is_package else "Module")
+        )
         print(f"{indent}- {node.name} ({node_type})")
 
         for child in sorted(node.children, key=lambda c: c.name):

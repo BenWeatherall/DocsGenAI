@@ -5,7 +5,7 @@ This module provides the main DependencyGraph class and re-exports
 the builder and analyzer components for convenience.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import networkx as nx
 
@@ -18,12 +18,12 @@ class DependencyGraph:
     between modules using node names and data dictionaries.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty dependency graph."""
-        self.nodes: Dict[str, Dict[str, Any]] = {}
-        self.edges: Dict[Tuple[str, str], Dict[str, Any]] = {}
+        self.nodes: dict[str, dict[str, Any]] = {}
+        self.edges: dict[tuple[str, str], dict[str, Any]] = {}
 
-    def add_node(self, name: str, data: Dict[str, Any]) -> None:
+    def add_node(self, name: str, data: dict[str, Any]) -> None:
         """
         Add a node to the graph.
 
@@ -70,7 +70,7 @@ class DependencyGraph:
         for edge in edges_to_remove:
             del self.edges[edge]
 
-    def get_node(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_node(self, name: str) -> dict[str, Any] | None:
         """
         Get node data by name.
 
@@ -82,7 +82,7 @@ class DependencyGraph:
         """
         return self.nodes.get(name)
 
-    def get_neighbors(self, name: str) -> List[str]:
+    def get_neighbors(self, name: str) -> list[str]:
         """
         Get all neighbors of a node.
 
@@ -124,7 +124,7 @@ class DependencyGraph:
         except nx.NetworkXNoCycle:
             return False
 
-    def topological_sort(self) -> List[str]:
+    def topological_sort(self) -> list[str]:
         """
         Perform topological sorting of the graph.
 
@@ -153,7 +153,7 @@ class DependencyGraph:
                 raise ValueError("Graph contains cycles") from e
             raise
 
-    def find_cycles(self) -> List[List[str]]:
+    def find_cycles(self) -> list[list[str]]:
         """
         Find all cycles in the graph.
 
@@ -177,7 +177,7 @@ class DependencyGraph:
         except nx.NetworkXNoCycle:
             return []
 
-    def get_dependency_path(self, from_node: str, to_node: str) -> Optional[List[str]]:
+    def get_dependency_path(self, from_node: str, to_node: str) -> list[str] | None:
         """
         Get the dependency path between two nodes.
 
@@ -206,7 +206,7 @@ class DependencyGraph:
         except nx.NetworkXNoPath:
             return None
 
-    def get_reverse_dependencies(self, node_name: str) -> List[str]:
+    def get_reverse_dependencies(self, node_name: str) -> list[str]:
         """
         Get all nodes that depend on the given node.
 
@@ -222,7 +222,7 @@ class DependencyGraph:
                 dependents.append(from_node)
         return dependents
 
-    def get_dependency_tree(self, node_name: str) -> Dict[str, Any]:
+    def get_dependency_tree(self, node_name: str) -> dict[str, Any]:
         """
         Get the dependency tree for a node.
 
@@ -247,7 +247,7 @@ class DependencyGraph:
 
         return tree
 
-    def analyze_dependency_metrics(self) -> Dict[str, Any]:
+    def analyze_dependency_metrics(self) -> dict[str, Any]:
         """
         Analyze dependency metrics for the graph.
 
@@ -317,7 +317,7 @@ class DependencyGraph:
         dot_lines.append("}")
         return "\n".join(dot_lines)
 
-    def export_to_json(self) -> Dict[str, Any]:
+    def export_to_json(self) -> dict[str, Any]:
         """
         Export the graph to JSON format.
 
@@ -345,7 +345,7 @@ class DependencyGraph:
         """Clear all nodes and edges from the graph (alias for clear_graph)."""
         self.clear_graph()
 
-    def get_subgraph(self, node_names: List[str]) -> "DependencyGraph":
+    def get_subgraph(self, node_names: list[str]) -> "DependencyGraph":
         """
         Get a subgraph containing only the specified nodes.
 

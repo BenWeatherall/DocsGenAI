@@ -13,6 +13,7 @@ from unittest.mock import patch
 import pytest
 
 from genai_docs.config import Config
+from genai_docs.exceptions import ConfigurationError
 
 
 class TestConfig:
@@ -31,30 +32,31 @@ class TestConfig:
         """Test loading configuration from environment variables."""
         config = Config()
 
-        with patch.dict(os.environ, {
-            'GOOGLE_API_KEY': 'test-api-key',
-            'GENAI_MODEL': 'test-model'
-        }):
+        with patch.dict(
+            os.environ, {"GOOGLE_API_KEY": "test-api-key", "GENAI_MODEL": "test-model"}
+        ):
             config.load_from_environment()
 
-        assert config.api_key == 'test-api-key'
-        assert config.model_name == 'test-model'
+        assert config.api_key == "test-api-key"
+        assert config.model_name == "test-model"
 
     def test_load_from_environment_default_model(self):
         """Test loading configuration with default model when not specified."""
         config = Config()
 
-        with patch.dict(os.environ, {'GOOGLE_API_KEY': 'test-api-key'}):
+        with patch.dict(os.environ, {"GOOGLE_API_KEY": "test-api-key"}):
             config.load_from_environment()
 
-        assert config.api_key == 'test-api-key'
+        assert config.api_key == "test-api-key"
         assert config.model_name == "gemini-2.0-flash"
 
     def test_validate_missing_api_key(self):
         """Test validation fails when API key is missing."""
         config = Config()
 
-        with pytest.raises(ValueError, match="GOOGLE_API_KEY environment variable is required"):
+        with pytest.raises(
+            ConfigurationError, match="GOOGLE_API_KEY environment variable is required"
+        ):
             config.validate()
 
     def test_validate_with_api_key(self):
@@ -77,16 +79,22 @@ class TestConfig:
         """Test setting project root with invalid path."""
         config = Config()
 
-        with pytest.raises(ValueError, match="Project path is not a valid directory"):
+        with pytest.raises(
+            ConfigurationError, match="Project path is not a valid directory"
+        ):
             config.set_project_root("/nonexistent/path")
 
     def test_set_project_root_file_path(self):
         """Test setting project root with file path instead of directory."""
         config = Config()
 
-        with tempfile.NamedTemporaryFile() as temp_file:
-            with pytest.raises(ValueError, match="Project path is not a valid directory"):
-                config.set_project_root(temp_file.name)
+        with (
+            tempfile.NamedTemporaryFile() as temp_file,
+            pytest.raises(
+                ConfigurationError, match="Project path is not a valid directory"
+            ),
+        ):
+            config.set_project_root(temp_file.name)
 
     def test_set_output_dir_specified(self):
         """Test setting output directory when specified."""

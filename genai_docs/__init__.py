@@ -9,9 +9,7 @@ from .ast_analyzer import ASTAnalyzer
 from .core_types import DependencyGraph, ImportStatement, ModuleNode
 from .dependency_graph import DependencyAnalyzer, DependencyGraphBuilder
 from .main import main
-
-__version__ = "0.1.0"
-__author__ = "Ben Weatherall"
+from .version import __author__, __version__
 
 # Export version for use in CLI and other modules
 __all__ = [
@@ -21,16 +19,7 @@ __all__ = [
     "DependencyGraphBuilder",
     "ImportStatement",
     "ModuleNode",
+    "__author__",
     "__version__",
-    "main",
-]
-
-__all__ = [
-    "ASTAnalyzer",
-    "DependencyAnalyzer",
-    "DependencyGraph",
-    "DependencyGraphBuilder",
-    "ImportStatement",
-    "ModuleNode",
     "main",
 ]

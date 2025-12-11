@@ -7,22 +7,27 @@ for generating documentation content.
 
 import logging
 import time
-from typing import Optional
+from pathlib import Path
 
 import google.generativeai as genai
+from jinja2 import Environment, FileSystemLoader
 
 from .config import config
 from .exceptions import LLMError
 
 logger = logging.getLogger(__name__)
 
+# Initialize Jinja2 environment
+_template_dir = Path(__file__).parent / "templates"
+_jinja_env = Environment(loader=FileSystemLoader(_template_dir))
+
 
 class LLMClient:
     """Client for interacting with the Google Generative AI API."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the LLM client."""
-        self.model = None
+        self.model: genai.GenerativeModel | None = None
         self._configure_api()
 
     def _configure_api(self) -> None:
@@ -107,59 +112,18 @@ class LLMClient:
         Returns:
             Generated project documentation
         """
-        prompt_parts = []
-        prompt_parts.append(
-            "Please provide clear, concise, and comprehensive documentation for this Python project."
+        template = _jinja_env.get_template("project_documentation.j2")
+        full_prompt = template.render(
+            project_files=project_files or {}, children_docs=children_docs or []
         )
-        prompt_parts.append("Your documentation should cover:")
-        prompt_parts.append(
-            "1. **Purpose:** What is the overall goal or functionality of this project/library?"
-        )
-        prompt_parts.append(
-            "2. **Public Interface:** What are the main public classes, functions, or modules that users should interact with?"
-        )
-        prompt_parts.append(
-            "3. **Installation & Usage:** How should users install and use this project?"
-        )
-        prompt_parts.append(
-            "4. **Project Structure:** Provide an overview of the main modules and their purposes."
-        )
-        prompt_parts.append(
-            "5. **Dependencies:** What are the key dependencies and requirements?"
-        )
-
-        # Include project configuration files
-        if project_files:
-            prompt_parts.append("\n## Project Configuration Files:")
-            for filename, content in project_files.items():
-                prompt_parts.append(f"\n### {filename}")
-                prompt_parts.append(f"```\n{content}\n```")
-
-        # Include documentation of children
-        if children_docs:
-            prompt_parts.append("\n## Sub-modules and Packages:\n")
-            for doc in children_docs:
-                prompt_parts.append(doc)
-        else:
-            prompt_parts.append(
-                "\nThis project does not contain any sub-modules or packages."
-            )
-
-        prompt_parts.append(
-            "\n\nFocus on the public-facing interface and user-facing functionality. "
-            "Only reference publicly exposed classes, functions, and modules that are "
-            "intended for external use. Private implementation details should be omitted."
-        )
-
-        full_prompt = "\n".join(prompt_parts)
         return self.generate_documentation(full_prompt)
 
     def generate_package_documentation(
         self,
         package_name: str,
         children_docs: list[str],
-        init_content: Optional[str] = None,
-        dependency_context: Optional[str] = None,
+        init_content: str | None = None,
+        dependency_context: str | None = None,
     ) -> str:
         """
         Generate documentation for a Python package.
@@ -173,54 +137,20 @@ class LLMClient:
         Returns:
             Generated package documentation
         """
-        prompt_parts = []
-        prompt_parts.append(
-            f"Please provide clear, concise, and comprehensive documentation for the Python package '{package_name}'."
+        template = _jinja_env.get_template("package_documentation.j2")
+        full_prompt = template.render(
+            package_name=package_name,
+            children_docs=children_docs or [],
+            init_content=init_content,
+            dependency_context=dependency_context,
         )
-        prompt_parts.append("Your documentation should cover:")
-        prompt_parts.append(
-            "1. **Purpose:** What is the overall goal or functionality of this package?"
-        )
-        prompt_parts.append(
-            "2. **Interface:** What are the main classes, functions, or variables exposed by this package for external use?"
-        )
-        prompt_parts.append(
-            "3. **Usage:** Provide clear examples of how this package would typically be imported and used."
-        )
-        prompt_parts.append(
-            "4. **Relationship to Sub-modules:** Explain how the sub-modules contribute to the package's overall functionality."
-        )
-
-        # Include dependency context if available
-        if dependency_context:
-            prompt_parts.append(dependency_context)
-
-        # Include documentation of children
-        if children_docs:
-            prompt_parts.append(
-                "\nConsider the following as documentation for its direct sub-modules/sub-packages:"
-            )
-            for doc in children_docs:
-                prompt_parts.append(doc)
-        else:
-            prompt_parts.append(
-                "\nThis package does not contain any direct sub-modules or sub-packages."
-            )
-
-        # Include content of __init__.py if it exists
-        if init_content:
-            prompt_parts.append(
-                f"\nHere is the content of the package's __init__.py file:\n```python\n{init_content}\n```\n"
-            )
-
-        full_prompt = "\n".join(prompt_parts)
         return self.generate_documentation(full_prompt)
 
     def generate_module_documentation(
         self,
         module_name: str,
-        module_content: Optional[str] = None,
-        dependency_context: Optional[str] = None,
+        module_content: str | None = None,
+        dependency_context: str | None = None,
     ) -> str:
         """
         Generate documentation for a Python module.
@@ -233,37 +163,10 @@ class LLMClient:
         Returns:
             Generated module documentation
         """
-        prompt_parts = []
-        prompt_parts.append(
-            f"Please provide clear, concise, and comprehensive documentation for the Python module '{module_name}'."
+        template = _jinja_env.get_template("module_documentation.j2")
+        full_prompt = template.render(
+            module_name=module_name,
+            module_content=module_content,
+            dependency_context=dependency_context,
         )
-        prompt_parts.append("Your documentation should cover:")
-        prompt_parts.append(
-            "1. **Purpose:** What is the specific goal or functionality of this module?"
-        )
-        prompt_parts.append(
-            "2. **Interface:** What are the main functions, classes, or variables exposed by this module for external use?"
-        )
-        prompt_parts.append(
-            "3. **Usage:** Provide clear examples of how this module would typically be imported and used."
-        )
-
-        # Include dependency context if available
-        if dependency_context:
-            prompt_parts.append(dependency_context)
-
-        if module_content:
-            prompt_parts.append(
-                f"\nHere is the Python code for the module:\n```python\n{module_content}\n```\n"
-            )
-        else:
-            prompt_parts.append(
-                "\nThis module file is empty or its content could not be read.\n"
-            )
-
-        full_prompt = "\n".join(prompt_parts)
         return self.generate_documentation(full_prompt)
-
-
-# Global LLM client instance
-llm_client = LLMClient()

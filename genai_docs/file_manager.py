@@ -7,7 +7,6 @@ saving documentation, and managing file paths.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 from .config import config
 from .core_types import ModuleNode
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 class FileManager:
     """Manages file operations for the documentation generator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the file manager."""
         self.project_files_cache: dict[str, str] = {}
 
@@ -61,7 +60,7 @@ class FileManager:
         self.project_files_cache = project_files
         return project_files
 
-    def read_module_content(self, module_path: Path) -> Optional[str]:
+    def read_module_content(self, module_path: Path) -> str | None:
         """
         Read the content of a Python module file.
 
@@ -80,7 +79,7 @@ class FileManager:
             logger.warning(f"Could not read module file {module_path}: {e}")
             return None
 
-    def read_init_file(self, package_path: Path) -> Optional[str]:
+    def read_init_file(self, package_path: Path) -> str | None:
         """
         Read the __init__.py file of a package.
 

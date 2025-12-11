@@ -1,0 +1,22 @@
+Please provide clear, concise, and comprehensive documentation for the Python module '{{ module_name }}'.
+Your documentation should cover:
+1. **Purpose:** What is the specific goal or functionality of this module?
+2. **Interface:** What are the main functions, classes, or variables exposed by this module for external use?
+3. **Usage:** Provide clear examples of how this module would typically be imported and used.
+
+{% if dependency_context %}
+{{ dependency_context }}
+{% endif %}
+
+{% if module_content %}
+
+Here is the Python code for the module:
+```python
+{{ module_content }}
+```
+
+{% else %}
+
+This module file is empty or its content could not be read.
+
+{% endif %}

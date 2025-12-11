@@ -6,7 +6,6 @@ from Python project modules and their import statements.
 """
 
 from pathlib import Path
-from typing import Optional
 
 from .ast_analyzer import ASTAnalyzer
 from .core_types import DependencyGraph, ImportStatement, ModuleNode
@@ -20,7 +19,7 @@ class DependencyGraphBuilder:
     a complete dependency graph that can be analyzed for ordering and cycles.
     """
 
-    def __init__(self, project_root: str):
+    def __init__(self, project_root: str) -> None:
         """
         Initialize the dependency graph builder.
 
@@ -89,7 +88,7 @@ class DependencyGraphBuilder:
 
     def _resolve_import_to_module(
         self, import_stmt: ImportStatement, source_node: ModuleNode
-    ) -> Optional[ModuleNode]:
+    ) -> ModuleNode | None:
         """
         Resolve an import statement to a ModuleNode.
 
@@ -106,7 +105,7 @@ class DependencyGraphBuilder:
 
     def _resolve_relative_import(
         self, import_stmt: ImportStatement, source_node: ModuleNode
-    ) -> Optional[ModuleNode]:
+    ) -> ModuleNode | None:
         """
         Resolve a relative import to a ModuleNode.
 
@@ -146,7 +145,7 @@ class DependencyGraphBuilder:
 
     def _resolve_absolute_import(
         self, import_stmt: ImportStatement, source_node: ModuleNode
-    ) -> Optional[ModuleNode]:
+    ) -> ModuleNode | None:
         """
         Resolve an absolute import to a ModuleNode.
 

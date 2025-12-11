@@ -20,9 +20,6 @@ class DependencyAnalyzer:
     calculate metrics, and validate dependency graphs.
     """
 
-    def __init__(self):
-        """Initialize the dependency analyzer."""
-
     def analyze_graph(self, graph: DependencyGraph) -> dict[str, Any]:
         """
         Perform comprehensive analysis of a dependency graph.
@@ -33,14 +30,25 @@ class DependencyAnalyzer:
         Returns:
             Dictionary containing analysis results
         """
-        analysis = {
-            "cycles": self._detect_cycles(graph),
-            "topological_order": self._generate_topological_order(graph),
-            "metrics": self._calculate_metrics(graph),
-            "validation": self.validate_graph(graph),
-        }
+        cycles = self._detect_cycles(graph)
 
-        return analysis
+        # Try to generate topological order, but handle cycles gracefully
+        try:
+            topological_order = self._generate_topological_order(graph)
+        except (ValueError, nx.NetworkXUnfeasible):
+            # If cycles prevent topological sort, return empty list
+            topological_order = []
+
+        metrics = self._calculate_metrics(graph)
+
+        return {
+            "cycles": cycles,
+            "topological_order": topological_order,
+            "metrics": metrics,
+            "validation": self.validate_graph(graph),
+            "node_count": graph.get_node_count(),
+            "has_cycles": len(cycles) > 0,
+        }
 
     def _detect_cycles(self, graph: DependencyGraph) -> list[list[ModuleNode]]:
         """
@@ -107,10 +115,11 @@ class DependencyAnalyzer:
         for node in graph.get_all_nodes():
             nx_graph.add_node(node.name)
 
-        # Add edges (dependencies: source depends on target)
+        # Add edges (dependencies: dep comes before node in topological order)
+        # If node depends on dep, then dep should come before node
         for node in graph.get_all_nodes():
             for dep in node.dependencies:
-                nx_graph.add_edge(node.name, dep.name)
+                nx_graph.add_edge(dep.name, node.name)
 
         try:
             # Generate topological order using NetworkX

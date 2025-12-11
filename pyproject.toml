@@ -7,7 +7,7 @@ name = "genai-docs"
 version = "0.1.0"
 description = "Generate comprehensive documentation for Python projects using AI"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
     {name = "Ben Weatherall", email = "ben@example.com"}
@@ -29,6 +29,8 @@ classifiers = [
 dependencies = [
     "google-generativeai>=0.3.0",
     "networkx>=3.0.0",
+    "pydantic>=2.0.0",
+    "jinja2>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -58,3 +60,18 @@ extend = "ruff.toml"
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+show_error_codes = true

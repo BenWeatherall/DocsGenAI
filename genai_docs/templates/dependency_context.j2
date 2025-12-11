@@ -1,0 +1,7 @@
+{% if dependencies %}
+
+**Dependencies:**
+{% for dep_name, dep_summary in dependencies.items() %}
+- **{{ dep_name }}**: {{ dep_summary }}
+{% endfor %}
+{% endif %}

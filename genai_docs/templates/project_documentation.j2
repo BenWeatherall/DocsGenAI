@@ -1,0 +1,32 @@
+Please provide clear, concise, and comprehensive documentation for this Python project.
+Your documentation should cover:
+1. **Purpose:** What is the overall goal or functionality of this project/library?
+2. **Public Interface:** What are the main public classes, functions, or modules that users should interact with?
+3. **Installation & Usage:** How should users install and use this project?
+4. **Project Structure:** Provide an overview of the main modules and their purposes.
+5. **Dependencies:** What are the key dependencies and requirements?
+
+{% if project_files %}
+## Project Configuration Files:
+{% for filename, content in project_files.items() %}
+
+### {{ filename }}
+```
+{{ content }}
+```
+{% endfor %}
+{% endif %}
+
+{% if children_docs %}
+## Sub-modules and Packages:
+
+{% for doc in children_docs %}
+{{ doc }}
+{% endfor %}
+{% else %}
+
+This project does not contain any sub-modules or packages.
+{% endif %}
+
+
+Focus on the public-facing interface and user-facing functionality. Only reference publicly exposed classes, functions, and modules that are intended for external use. Private implementation details should be omitted.

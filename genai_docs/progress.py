@@ -7,7 +7,6 @@ documentation generation progress without external dependencies.
 
 import logging
 import sys
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 class ProgressTracker:
     """Simple progress tracker for documentation generation."""
 
-    def __init__(self, total: int, enabled: bool = True):
+    def __init__(self, total: int, enabled: bool = True) -> None:
         """
         Initialize the progress tracker.
 
@@ -26,7 +25,7 @@ class ProgressTracker:
         self.total = total
         self.current = 0
         self.enabled = enabled
-        self.last_module: Optional[str] = None
+        self.last_module: str | None = None
 
     def update(self, module_name: str, increment: int = 1) -> None:
         """
