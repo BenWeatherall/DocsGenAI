@@ -62,8 +62,9 @@ class DependencyGraphBuilder:
 
         return graph
 
-    def _build_dependencies(self, graph: DependencyGraph,
-                          project_imports: dict[str, list[ImportStatement]]) -> None:
+    def _build_dependencies(
+        self, graph: DependencyGraph, project_imports: dict[str, list[ImportStatement]]
+    ) -> None:
         """
         Build dependency relationships between modules.
 
@@ -86,8 +87,9 @@ class DependencyGraphBuilder:
                 if target_node and target_node != source_node:
                     source_node.add_dependency(target_node)
 
-    def _resolve_import_to_module(self, import_stmt: ImportStatement,
-                                source_node: ModuleNode) -> Optional[ModuleNode]:
+    def _resolve_import_to_module(
+        self, import_stmt: ImportStatement, source_node: ModuleNode
+    ) -> Optional[ModuleNode]:
         """
         Resolve an import statement to a ModuleNode.
 
@@ -102,8 +104,9 @@ class DependencyGraphBuilder:
             return self._resolve_relative_import(import_stmt, source_node)
         return self._resolve_absolute_import(import_stmt, source_node)
 
-    def _resolve_relative_import(self, import_stmt: ImportStatement,
-                               source_node: ModuleNode) -> Optional[ModuleNode]:
+    def _resolve_relative_import(
+        self, import_stmt: ImportStatement, source_node: ModuleNode
+    ) -> Optional[ModuleNode]:
         """
         Resolve a relative import to a ModuleNode.
 
@@ -117,9 +120,11 @@ class DependencyGraphBuilder:
         # Calculate the target path based on relative import
         source_path = Path(source_node.path)
 
-        if import_stmt.module_name.startswith('.'):
+        if import_stmt.module_name.startswith("."):
             # Relative import
-            dots = len(import_stmt.module_name) - len(import_stmt.module_name.lstrip('.'))
+            dots = len(import_stmt.module_name) - len(
+                import_stmt.module_name.lstrip(".")
+            )
             target_module = import_stmt.module_name[dots:]
 
             if dots == 1:
@@ -139,8 +144,9 @@ class DependencyGraphBuilder:
         # Check if target exists in our module map
         return self.module_path_map.get(str(target_path))
 
-    def _resolve_absolute_import(self, import_stmt: ImportStatement,
-                               source_node: ModuleNode) -> Optional[ModuleNode]:
+    def _resolve_absolute_import(
+        self, import_stmt: ImportStatement, source_node: ModuleNode
+    ) -> Optional[ModuleNode]:
         """
         Resolve an absolute import to a ModuleNode.
 
@@ -152,7 +158,29 @@ class DependencyGraphBuilder:
             ModuleNode if found, None otherwise
         """
         # For absolute imports, we need to check if the module is within our project
+        # Try module file first
         target_path = self.project_root / f"{import_stmt.module_name}.py"
+        if str(target_path) in self.module_path_map:
+            return self.module_path_map[str(target_path)]
 
-        # Check if target exists in our module map
-        return self.module_path_map.get(str(target_path))
+        # Try package (directory with __init__.py)
+        module_parts = import_stmt.module_name.split(".")
+        package_path = self.project_root
+        for part in module_parts:
+            package_path = package_path / part
+
+        # Check for package __init__.py
+        init_path = package_path / "__init__.py"
+        if str(package_path) in self.module_path_map:
+            return self.module_path_map[str(package_path)]
+
+        # Check for module file in package
+        if len(module_parts) > 1:
+            package_dir = self.project_root
+            for part in module_parts[:-1]:
+                package_dir = package_dir / part
+            module_file = package_dir / f"{module_parts[-1]}.py"
+            if str(module_file) in self.module_path_map:
+                return self.module_path_map[str(module_file)]
+
+        return None

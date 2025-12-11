@@ -10,9 +10,12 @@ import logging
 import sys
 from pathlib import Path
 
+from . import __version__
+from .cache import DocumentationCache
 from .config import config
 from .core_types import ModuleNode
 from .documentation_generator import doc_generator
+from .exceptions import GenAIDocsError
 from .file_manager import file_manager
 from .tree_builder import tree_builder
 
@@ -30,40 +33,49 @@ Examples:
   genai-docs /path/to/project --output /path/to/docs
   genai-docs /path/to/project --verbose
   genai-docs /path/to/project --dry-run
-        """
+        """,
+    )
+
+    parser.add_argument("project_path", help="Path to the Python project to document")
+
+    parser.add_argument(
+        "--output",
+        "-o",
+        help="Output directory for documentation (default: same as project)",
     )
 
     parser.add_argument(
-        "project_path",
-        help="Path to the Python project to document"
-    )
-
-    parser.add_argument(
-        "--output", "-o",
-        help="Output directory for documentation (default: same as project)"
-    )
-
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose logging"
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
 
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be documented without generating files"
+        help="Show what would be documented without generating files",
+    )
+
+    parser.add_argument("--model", help="LLM model to use (default: gemini-2.0-flash)")
+
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force regeneration of all documentation, ignoring cache",
     )
 
     parser.add_argument(
-        "--model",
-        help="LLM model to use (default: gemini-2.0-flash)"
+        "--no-cache",
+        action="store_true",
+        help="Disable caching of generated documentation",
     )
 
     parser.add_argument(
-        "--version",
-        action="version",
-        version="genai-docs 0.1.0"
+        "--no-dependency-graph",
+        action="store_true",
+        help="Disable dependency-aware ordering (use simple tree traversal)",
+    )
+
+    parser.add_argument(
+        "--version", action="version", version=f"genai-docs {__version__}"
     )
 
     return parser
@@ -74,10 +86,8 @@ def setup_logging(verbose: bool = False) -> None:
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
 
 
@@ -121,13 +131,17 @@ def build_and_validate_tree(project_path: str) -> ModuleNode:
         raise ValueError("Failed to build module tree")
 
     if not module_tree_root.children and not module_tree_root.is_package:
-        raise ValueError("No Python modules or packages found in the specified directory")
+        raise ValueError(
+            "No Python modules or packages found in the specified directory"
+        )
 
     logger.info("Module tree built successfully")
     return module_tree_root
 
 
-def generate_documentation(module_tree_root: ModuleNode, project_path: str, dry_run: bool = False) -> None:
+def generate_documentation(
+    module_tree_root: ModuleNode, project_path: str, dry_run: bool = False
+) -> None:
     """
     Generate documentation for the entire module tree.
 
@@ -188,17 +202,17 @@ def validate_results(module_tree_root: ModuleNode, dry_run: bool = False) -> Non
     print(f"Failed: {validation['stats']['failed_nodes']}")
     print(f"Empty documentation: {validation['stats']['empty_documentation']}")
 
-    if validation['issues']:
+    if validation["issues"]:
         print("\nIssues found:")
-        for issue in validation['issues']:
+        for issue in validation["issues"]:
             print(f"  - {issue}")
 
-    if validation['warnings']:
+    if validation["warnings"]:
         print("\nWarnings:")
-        for warning in validation['warnings']:
+        for warning in validation["warnings"]:
             print(f"  - {warning}")
 
-    if validation['valid']:
+    if validation["valid"]:
         print("\n✅ Documentation generation completed successfully!")
     else:
         print("\n❌ Documentation generation completed with issues")
@@ -222,6 +236,12 @@ def main() -> int:
         if args.model:
             config.model_name = args.model
 
+        # Set configuration flags
+        config.force_regenerate = args.force
+        config.use_cache = not args.no_cache
+        config.use_dependency_graph = not args.no_dependency_graph
+        config.verbose = args.verbose
+
         config.validate()
 
         # Setup logging
@@ -237,6 +257,14 @@ def main() -> int:
         # Set output directory if specified
         if args.output:
             config.set_output_dir(args.output)
+
+        # Initialize cache if enabled
+        if config.use_cache and not args.dry_run:
+            cache = DocumentationCache()
+            cache.initialize(config.project_root)
+            doc_generator.cache = cache
+            doc_generator.force_regenerate = config.force_regenerate
+            doc_generator.use_dependency_graph = config.use_dependency_graph
 
         # Build and validate module tree
         module_tree_root = build_and_validate_tree(args.project_path)
@@ -255,8 +283,11 @@ def main() -> int:
     except KeyboardInterrupt:
         logger.info("Documentation generation interrupted by user")
         return 1
-    except Exception as e:
+    except GenAIDocsError as e:
         logger.error(f"Documentation generation failed: {e}")
+        return 1
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=args.verbose)
         return 1
 
 

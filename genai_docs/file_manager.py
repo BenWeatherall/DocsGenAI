@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 from .config import config
+from .core_types import ModuleNode
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +95,7 @@ class FileManager:
             return self.read_module_content(init_file_path)
         return None
 
-    def save_documentation(self, node, documentation: str) -> bool:
+    def save_documentation(self, node: ModuleNode, documentation: str) -> bool:
         """
         Save the generated documentation to a markdown file in the module's directory.
         Handles multiple nodes in the same directory by using appropriate filenames.
@@ -155,7 +156,7 @@ class FileManager:
             logger.error(f"Error saving documentation for {node.name}: {e}")
             return False
 
-    def get_module_file_path(self, node) -> Path:
+    def get_module_file_path(self, node: ModuleNode) -> Path:
         """
         Get the file path for a module node.
 

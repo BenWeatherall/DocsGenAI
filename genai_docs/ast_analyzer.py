@@ -9,6 +9,7 @@ import ast
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .core_types import ImportStatement, ModuleNode
 from .import_analyzer import ImportAnalyzer
 from .import_extractor import ImportExtractor
 
@@ -82,7 +83,7 @@ class ASTAnalyzer:
                     line_number=node.lineno,
                     args=[arg.arg for arg in node.args.args],
                     docstring=ast.get_docstring(node),
-                    is_async=isinstance(node, ast.AsyncFunctionDef)
+                    is_async=isinstance(node, ast.AsyncFunctionDef),
                 )
                 functions.append(func_info)
 
@@ -118,20 +119,24 @@ class ASTAnalyzer:
                 methods = []
                 for item in node.body:
                     if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        methods.append({
-                            'name': item.name,
-                            'line_number': item.lineno,
-                            'args': [arg.arg for arg in item.args.args],
-                            'docstring': ast.get_docstring(item),
-                            'is_async': isinstance(item, ast.AsyncFunctionDef)
-                        })
+                        methods.append(
+                            {
+                                "name": item.name,
+                                "line_number": item.lineno,
+                                "args": [arg.arg for arg in item.args.args],
+                                "docstring": ast.get_docstring(item),
+                                "is_async": isinstance(item, ast.AsyncFunctionDef),
+                            }
+                        )
 
                 class_info = ClassInfo(
                     name=node.name,
                     line_number=node.lineno,
-                    bases=[base.id for base in node.bases if isinstance(base, ast.Name)],
+                    bases=[
+                        base.id for base in node.bases if isinstance(base, ast.Name)
+                    ],
                     docstring=ast.get_docstring(node),
-                    methods=methods
+                    methods=methods,
                 )
                 classes.append(class_info)
 
@@ -163,11 +168,11 @@ class ASTAnalyzer:
         tree = self.parse_python_code(code)
         if not tree:
             return {
-                'functions': [],
-                'classes': [],
-                'imports': [],
-                'docstrings': [],
-                'complexity': 0
+                "functions": [],
+                "classes": [],
+                "imports": [],
+                "docstrings": [],
+                "complexity": 0,
             }
 
         functions = self.extract_functions(code)
@@ -177,11 +182,11 @@ class ASTAnalyzer:
         complexity = self.analyze_complexity(code)
 
         return {
-            'functions': functions,
-            'classes': classes,
-            'imports': imports,
-            'docstrings': docstrings,
-            'complexity': complexity
+            "functions": functions,
+            "classes": classes,
+            "imports": imports,
+            "docstrings": docstrings,
+            "complexity": complexity,
         }
 
     def extract_docstrings(self, code: str) -> List[Dict[str, Any]]:
@@ -204,12 +209,12 @@ class ASTAnalyzer:
                 docstring = ast.get_docstring(node)
                 if docstring:
                     doc_info = {
-                        'content': docstring,
-                        'line_number': node.lineno,
-                        'type': type(node).__name__
+                        "content": docstring,
+                        "line_number": node.lineno,
+                        "type": type(node).__name__,
                     }
-                    if hasattr(node, 'name'):
-                        doc_info['name'] = node.name
+                    if hasattr(node, "name"):
+                        doc_info["name"] = node.name
                     docstrings.append(doc_info)
 
         return docstrings
@@ -235,15 +240,14 @@ class ASTAnalyzer:
 
                 # Calculate complexity for this function
                 for child in ast.walk(node):
-                    if isinstance(child, (ast.If, ast.While, ast.For, ast.AsyncFor)) or isinstance(child, ast.ExceptHandler):
+                    if isinstance(
+                        child, (ast.If, ast.While, ast.For, ast.AsyncFor)
+                    ) or isinstance(child, ast.ExceptHandler):
                         complexity += 1
                     elif isinstance(child, ast.BoolOp):
                         complexity += len(child.values) - 1
 
-                functions.append({
-                    "name": node.name,
-                    "complexity": complexity
-                })
+                functions.append({"name": node.name, "complexity": complexity})
 
         return {"functions": functions}
 
@@ -265,16 +269,20 @@ class ASTAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, ast.arg) and node.annotation:
                 hint_info = {
-                    'arg_name': node.arg,
-                    'annotation': ast.unparse(node.annotation) if hasattr(ast, 'unparse') else str(node.annotation),
-                    'line_number': node.lineno
+                    "arg_name": node.arg,
+                    "annotation": ast.unparse(node.annotation)
+                    if hasattr(ast, "unparse")
+                    else str(node.annotation),
+                    "line_number": node.lineno,
                 }
                 type_hints.append(hint_info)
             elif isinstance(node, ast.FunctionDef) and node.returns:
                 hint_info = {
-                    'function': node.name,
-                    'return_annotation': ast.unparse(node.returns) if hasattr(ast, 'unparse') else str(node.returns),
-                    'line_number': node.lineno
+                    "function": node.name,
+                    "return_annotation": ast.unparse(node.returns)
+                    if hasattr(ast, "unparse")
+                    else str(node.returns),
+                    "line_number": node.lineno,
                 }
                 type_hints.append(hint_info)
             elif isinstance(node, ast.ClassDef):
@@ -282,10 +290,14 @@ class ASTAnalyzer:
                 for item in node.body:
                     if isinstance(item, ast.AnnAssign) and item.annotation:
                         hint_info = {
-                            'class': node.name,
-                            'attribute': item.target.id if hasattr(item.target, 'id') else str(item.target),
-                            'annotation': ast.unparse(item.annotation) if hasattr(ast, 'unparse') else str(item.annotation),
-                            'line_number': item.lineno
+                            "class": node.name,
+                            "attribute": item.target.id
+                            if hasattr(item.target, "id")
+                            else str(item.target),
+                            "annotation": ast.unparse(item.annotation)
+                            if hasattr(ast, "unparse")
+                            else str(item.annotation),
+                            "line_number": item.lineno,
                         }
                         type_hints.append(hint_info)
 
@@ -294,10 +306,12 @@ class ASTAnalyzer:
                     if isinstance(item, ast.FunctionDef):
                         if item.returns:
                             hint_info = {
-                                'class': node.name,
-                                'function': item.name,
-                                'return_annotation': ast.unparse(item.returns) if hasattr(ast, 'unparse') else str(item.returns),
-                                'line_number': item.lineno
+                                "class": node.name,
+                                "function": item.name,
+                                "return_annotation": ast.unparse(item.returns)
+                                if hasattr(ast, "unparse")
+                                else str(item.returns),
+                                "line_number": item.lineno,
                             }
                             type_hints.append(hint_info)
 
@@ -345,6 +359,20 @@ class ASTAnalyzer:
         """
         return self.import_analyzer.is_external_import(import_stmt)
 
+    def analyze_project_imports(
+        self, module_nodes: list[ModuleNode]
+    ) -> dict[str, list[ImportStatement]]:
+        """
+        Analyze imports for all modules in the project.
+
+        Args:
+            module_nodes: list of ModuleNode objects to analyze
+
+        Returns:
+            Dictionary mapping module paths to their import statements
+        """
+        return self.import_analyzer.analyze_project_imports(module_nodes)
+
 
 # For backward compatibility, also export ImportAnalyzer
-__all__ = ['ASTAnalyzer', 'ImportAnalyzer', 'ImportExtractor']
+__all__ = ["ASTAnalyzer", "ImportAnalyzer", "ImportExtractor"]

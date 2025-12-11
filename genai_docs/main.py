@@ -1,184 +1,46 @@
 """
 Main entry point for GenAI Docs.
 
-This module orchestrates the documentation generation process,
-bringing together all the components in a clean, modular way.
+This module provides a simple interactive interface that delegates to the CLI.
+For programmatic usage, use the CLI module directly.
 """
 
-import logging
 import sys
-from pathlib import Path
 
-from .config import config
-from .core_types import ModuleNode
-from .documentation_generator import doc_generator
-from .file_manager import file_manager
-from .tree_builder import tree_builder
-
-logger = logging.getLogger(__name__)
+from .cli import main as cli_main
 
 
-def setup_logging(verbose: bool = False) -> None:
-    """Setup logging configuration."""
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
-
-
-def validate_project_path(project_path: str) -> bool:
+def main() -> int:
     """
-    Validate that the provided project path is valid.
+    Main function that provides an interactive interface.
 
-    Args:
-        project_path: Path to validate
+    This function prompts the user for a project path and then delegates
+    to the CLI with appropriate arguments.
 
     Returns:
-        True if path is valid, False otherwise
+        Exit code (0 for success, non-zero for failure)
     """
-    path = Path(project_path)
-    if not path.exists():
-        logger.error(f"Project path does not exist: {project_path}")
-        return False
-    if not path.is_dir():
-        logger.error(f"Project path is not a directory: {project_path}")
-        return False
-    return True
+    print("GenAI Docs - Interactive Mode")
+    print("=" * 50)
+    repo_path = input(
+        "\nPlease enter the absolute path to the Python repository you want to document: "
+    ).strip()
 
+    if not repo_path:
+        print("Error: No path provided")
+        return 1
 
-def build_and_validate_tree(project_path: str) -> ModuleNode:
-    """
-    Build the module tree and validate it.
+    # Delegate to CLI with the provided path
+    # Simulate command-line arguments
+    import sys
 
-    Args:
-        project_path: Path to the project root
-
-    Returns:
-        Root node of the module tree
-
-    Raises:
-        ValueError: If tree building fails
-    """
-    logger.info(f"Building module tree for: {project_path}")
-    module_tree_root = tree_builder.build_module_tree(project_path)
-
-    if not module_tree_root:
-        raise ValueError("Failed to build module tree")
-
-    if not module_tree_root.children and not module_tree_root.is_package:
-        raise ValueError("No Python modules or packages found in the specified directory")
-
-    logger.info("Module tree built successfully")
-    return module_tree_root
-
-
-def generate_documentation(module_tree_root: ModuleNode, project_path: str) -> None:
-    """
-    Generate documentation for the entire module tree.
-
-    Args:
-        module_tree_root: Root node of the module tree
-        project_path: Path to the project root
-    """
-    logger.info("Reading project configuration files...")
-    project_files = file_manager.read_project_files(project_path)
-
-    logger.info("Starting documentation generation (bottom-up approach)...")
-    doc_generator.document_module_tree_bottom_up(module_tree_root, project_files)
-
-    logger.info("Documentation generation completed")
-
-
-def print_summary(module_tree_root: ModuleNode) -> None:
-    """
-    Print a summary of the generated documentation.
-
-    Args:
-        module_tree_root: Root node of the module tree
-    """
-    print("\n--- Documentation Complete ---")
-    print("Generated Documentation Summary:")
-    print(doc_generator.get_documentation_summary(module_tree_root))
-
-
-def validate_results(module_tree_root: ModuleNode) -> None:
-    """
-    Validate the generated documentation and print results.
-
-    Args:
-        module_tree_root: Root node of the module tree
-    """
-    validation = doc_generator.validate_documentation(module_tree_root)
-
-    print("\n--- Validation Results ---")
-    print(f"Total nodes: {validation['stats']['total_nodes']}")
-    print(f"Successfully documented: {validation['stats']['documented_nodes']}")
-    print(f"Failed: {validation['stats']['failed_nodes']}")
-    print(f"Empty documentation: {validation['stats']['empty_documentation']}")
-
-    if validation['issues']:
-        print("\nIssues found:")
-        for issue in validation['issues']:
-            print(f"  - {issue}")
-
-    if validation['warnings']:
-        print("\nWarnings:")
-        for warning in validation['warnings']:
-            print(f"  - {warning}")
-
-    if validation['valid']:
-        print("\n✅ Documentation generation completed successfully!")
-    else:
-        print("\n❌ Documentation generation completed with issues")
-
-
-def main() -> None:
-    """
-    Main function to orchestrate the documentation generation process.
-    """
+    original_argv = sys.argv
+    sys.argv = ["genai-docs", repo_path]
     try:
-        # Setup configuration
-        config.load_from_environment()
-        config.validate()
-
-        # Setup logging
-        setup_logging(verbose=False)
-
-        # Get project path from user input
-        repo_path = input(
-            "Please enter the absolute path to the Python repository you want to document: "
-        )
-
-        # Validate project path
-        if not validate_project_path(repo_path):
-            sys.exit(1)
-
-        # Set project configuration
-        config.set_project_root(repo_path)
-
-        # Build and validate module tree
-        module_tree_root = build_and_validate_tree(repo_path)
-
-        # Generate documentation
-        generate_documentation(module_tree_root, repo_path)
-
-        # Print summary
-        print_summary(module_tree_root)
-
-        # Validate results
-        validate_results(module_tree_root)
-
-    except KeyboardInterrupt:
-        logger.info("Documentation generation interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        logger.error(f"Documentation generation failed: {e}")
-        sys.exit(1)
+        return cli_main()
+    finally:
+        sys.argv = original_argv
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

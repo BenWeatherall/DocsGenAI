@@ -34,10 +34,10 @@ class DependencyAnalyzer:
             Dictionary containing analysis results
         """
         analysis = {
-            'cycles': self._detect_cycles(graph),
-            'topological_order': self._generate_topological_order(graph),
-            'metrics': self._calculate_metrics(graph),
-            'validation': self.validate_graph(graph)
+            "cycles": self._detect_cycles(graph),
+            "topological_order": self._generate_topological_order(graph),
+            "metrics": self._calculate_metrics(graph),
+            "validation": self.validate_graph(graph),
         }
 
         return analysis
@@ -87,26 +87,34 @@ class DependencyAnalyzer:
         """
         Generate topological ordering of modules.
 
+        Uses NetworkX's topological sort algorithm to order modules such that
+        dependencies come before dependents. This ensures documentation is
+        generated in the correct order.
+
         Args:
             graph: The DependencyGraph to analyze
 
         Returns:
             List of ModuleNode objects in topological order
+
+        Raises:
+            ValueError: If the graph contains cycles (preventing topological sort)
         """
         # Convert to NetworkX graph for topological sort
         nx_graph = nx.DiGraph()
 
-        # Add nodes
+        # Add nodes (using node names as identifiers)
         for node in graph.get_all_nodes():
             nx_graph.add_node(node.name)
 
-        # Add edges
+        # Add edges (dependencies: source depends on target)
         for node in graph.get_all_nodes():
             for dep in node.dependencies:
                 nx_graph.add_edge(node.name, dep.name)
 
         try:
-            # Generate topological order
+            # Generate topological order using NetworkX
+            # This will fail if cycles exist
             sorted_names = list(nx.topological_sort(nx_graph))
 
             # Convert back to ModuleNode objects
@@ -136,12 +144,12 @@ class DependencyAnalyzer:
 
         if not nodes:
             return {
-                'total_nodes': 0,
-                'total_edges': 0,
-                'average_dependencies': 0,
-                'max_dependencies': 0,
-                'min_dependencies': 0,
-                'dependency_distribution': {}
+                "total_nodes": 0,
+                "total_edges": 0,
+                "average_dependencies": 0,
+                "max_dependencies": 0,
+                "min_dependencies": 0,
+                "dependency_distribution": {},
             }
 
         # Calculate basic metrics
@@ -150,17 +158,19 @@ class DependencyAnalyzer:
         dependency_counts = [len(node.dependencies) for node in nodes]
 
         metrics = {
-            'total_nodes': total_nodes,
-            'total_edges': total_edges,
-            'average_dependencies': total_edges / total_nodes if total_nodes > 0 else 0,
-            'max_dependencies': max(dependency_counts) if dependency_counts else 0,
-            'min_dependencies': min(dependency_counts) if dependency_counts else 0,
-            'dependency_distribution': {}
+            "total_nodes": total_nodes,
+            "total_edges": total_edges,
+            "average_dependencies": total_edges / total_nodes if total_nodes > 0 else 0,
+            "max_dependencies": max(dependency_counts) if dependency_counts else 0,
+            "min_dependencies": min(dependency_counts) if dependency_counts else 0,
+            "dependency_distribution": {},
         }
 
         # Calculate dependency distribution
         for count in dependency_counts:
-            metrics['dependency_distribution'][count] = metrics['dependency_distribution'].get(count, 0) + 1
+            metrics["dependency_distribution"][count] = (
+                metrics["dependency_distribution"].get(count, 0) + 1
+            )
 
         return metrics
 
@@ -212,28 +222,35 @@ class DependencyAnalyzer:
         Returns:
             Dictionary containing validation results
         """
-        validation = {
-            'valid': True,
-            'issues': [],
-            'warnings': []
-        }
+        validation = {"valid": True, "issues": [], "warnings": []}
 
         nodes = graph.get_all_nodes()
 
         # Check for cycles
         cycles = self._detect_cycles(graph)
         if cycles:
-            validation['valid'] = False
-            validation['issues'].append(f"Found {len(cycles)} circular dependency cycles")
+            validation["valid"] = False
+            validation["issues"].append(
+                f"Found {len(cycles)} circular dependency cycles"
+            )
 
         # Check for orphaned nodes
-        orphaned_nodes = [node for node in nodes if not node.dependencies and not any(node in dep.dependencies for dep in nodes)]
+        orphaned_nodes = [
+            node
+            for node in nodes
+            if not node.dependencies
+            and not any(node in dep.dependencies for dep in nodes)
+        ]
         if orphaned_nodes:
-            validation['warnings'].append(f"Found {len(orphaned_nodes)} orphaned modules")
+            validation["warnings"].append(
+                f"Found {len(orphaned_nodes)} orphaned modules"
+            )
 
         # Check for high dependency counts
         high_dependency_nodes = [node for node in nodes if len(node.dependencies) > 10]
         if high_dependency_nodes:
-            validation['warnings'].append(f"Found {len(high_dependency_nodes)} modules with high dependency counts (>10)")
+            validation["warnings"].append(
+                f"Found {len(high_dependency_nodes)} modules with high dependency counts (>10)"
+            )
 
         return validation

@@ -33,7 +33,9 @@ class DependencyGraph:
         """
         self.nodes[name] = data.copy()
 
-    def add_edge(self, from_node: str, to_node: str, edge_type: str = "imports") -> None:
+    def add_edge(
+        self, from_node: str, to_node: str, edge_type: str = "imports"
+    ) -> None:
         """
         Add an edge between two nodes.
 
@@ -91,7 +93,7 @@ class DependencyGraph:
             List of neighbor node names
         """
         neighbors = []
-        for (from_node, to_node) in self.edges:
+        for from_node, to_node in self.edges:
             if from_node == name:
                 neighbors.append(to_node)
             elif to_node == name:
@@ -114,7 +116,7 @@ class DependencyGraph:
                 nx_graph.add_node(node_name)
 
             # Add edges
-            for (from_node, to_node) in self.edges:
+            for from_node, to_node in self.edges:
                 nx_graph.add_edge(from_node, to_node)
 
             # Check for cycles
@@ -141,7 +143,7 @@ class DependencyGraph:
                 nx_graph.add_node(node_name)
 
             # Add edges
-            for (from_node, to_node) in self.edges:
+            for from_node, to_node in self.edges:
                 nx_graph.add_edge(from_node, to_node)
 
             # Generate topological order
@@ -167,7 +169,7 @@ class DependencyGraph:
                 nx_graph.add_node(node_name)
 
             # Add edges
-            for (from_node, to_node) in self.edges:
+            for from_node, to_node in self.edges:
                 nx_graph.add_edge(from_node, to_node)
 
             # Find cycles
@@ -195,7 +197,7 @@ class DependencyGraph:
                 nx_graph.add_node(node_name)
 
             # Add edges
-            for (from_n, to_n) in self.edges:
+            for from_n, to_n in self.edges:
                 nx_graph.add_edge(from_n, to_n)
 
             # Find path
@@ -215,7 +217,7 @@ class DependencyGraph:
             List of node names that depend on the given node
         """
         dependents = []
-        for (from_node, to_node) in self.edges:
+        for from_node, to_node in self.edges:
             if to_node == node_name:
                 dependents.append(from_node)
         return dependents
@@ -233,7 +235,7 @@ class DependencyGraph:
         tree = {node_name: {}}
 
         # Get direct dependencies
-        for (from_node, to_node) in self.edges:
+        for from_node, to_node in self.edges:
             if from_node == node_name:
                 if to_node not in tree[node_name]:
                     tree[node_name][to_node] = {}
@@ -259,7 +261,7 @@ class DependencyGraph:
                 "average_dependencies": 0,
                 "max_dependencies": 0,
                 "min_dependencies": 0,
-                "cycles": 0
+                "cycles": 0,
             }
 
         # Calculate basic metrics
@@ -270,7 +272,7 @@ class DependencyGraph:
         dependency_counts = {}
         for node_name in self.nodes:
             count = 0
-            for (from_node, to_node) in self.edges:
+            for from_node, to_node in self.edges:
                 if from_node == node_name:
                     count += 1
             dependency_counts[node_name] = count
@@ -290,7 +292,7 @@ class DependencyGraph:
             "average_dependencies": avg_deps,
             "max_dependencies": max_deps,
             "min_dependencies": min_deps,
-            "cycles": cycles
+            "cycles": cycles,
         }
 
     def export_to_dot(self) -> str:
@@ -324,16 +326,15 @@ class DependencyGraph:
         """
         edges_list = []
         for (from_node, to_node), edge_data in self.edges.items():
-            edges_list.append({
-                "from": from_node,
-                "to": to_node,
-                "type": edge_data.get("type", "imports")
-            })
+            edges_list.append(
+                {
+                    "from": from_node,
+                    "to": to_node,
+                    "type": edge_data.get("type", "imports"),
+                }
+            )
 
-        return {
-            "nodes": self.nodes,
-            "edges": edges_list
-        }
+        return {"nodes": self.nodes, "edges": edges_list}
 
     def clear_graph(self) -> None:
         """Clear all nodes and edges from the graph."""
@@ -344,7 +345,7 @@ class DependencyGraph:
         """Clear all nodes and edges from the graph (alias for clear_graph)."""
         self.clear_graph()
 
-    def get_subgraph(self, node_names: List[str]) -> 'DependencyGraph':
+    def get_subgraph(self, node_names: List[str]) -> "DependencyGraph":
         """
         Get a subgraph containing only the specified nodes.
 
@@ -370,8 +371,16 @@ class DependencyGraph:
 
 
 # Re-export the builder and analyzer components
+# Note: There are two DependencyGraph classes:
+# 1. DependencyGraph in this file - Simple graph with string node names (legacy, may be deprecated)
+# 2. ModuleDependencyGraph (from core_types) - Uses ModuleNode objects (preferred for documentation system)
 from .core_types import DependencyGraph as ModuleDependencyGraph
 from .dependency_analyzer import DependencyAnalyzer
 from .dependency_graph_builder import DependencyGraphBuilder
 
-__all__ = ['DependencyAnalyzer', 'DependencyGraph', 'DependencyGraphBuilder', 'ModuleDependencyGraph']
+__all__ = [
+    "DependencyAnalyzer",
+    "DependencyGraph",
+    "DependencyGraphBuilder",
+    "ModuleDependencyGraph",
+]

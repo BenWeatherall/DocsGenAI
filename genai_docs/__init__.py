@@ -13,6 +13,18 @@ from .main import main
 __version__ = "0.1.0"
 __author__ = "Ben Weatherall"
 
+# Export version for use in CLI and other modules
+__all__ = [
+    "ASTAnalyzer",
+    "DependencyAnalyzer",
+    "DependencyGraph",
+    "DependencyGraphBuilder",
+    "ImportStatement",
+    "ModuleNode",
+    "__version__",
+    "main",
+]
+
 __all__ = [
     "ASTAnalyzer",
     "DependencyAnalyzer",
